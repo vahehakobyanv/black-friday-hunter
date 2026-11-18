@@ -103,3 +103,20 @@ def test_missing_gmail_secret_fails_cleanly_but_saves_data(cfg, now, tmp_path):
     assert not out.email_sent
     assert any("GMAIL_APP_PASSWORD" in e for e in out.errors)
     assert _count(cfg, Product) > 0      # collected data was still stored
+
+
+def test_same_deal_from_two_feeds_is_one_offer(cfg, now, tmp_path):
+    """mydealz 'hot' and 'new' feeds often contain the same thread."""
+    from app.analysis.ranking import build_deals
+    from app.database.repository import Repository
+    from app.shipping.currency import FxTable
+
+    run_once(cfg, send=False, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
+    eng = make_engine(cfg.db_path)
+    with make_session_factory(eng)() as s:
+        repo = Repository(s)
+        d, rates, src = repo.latest_fx()
+        deals = build_deals(repo, cfg, FxTable(rates, d, src), now, now)
+        for deal in deals:
+            urls = [deal.best.listing.url] + [o.listing.url for o in deal.others]
+            assert len(urls) == len(set(urls)), deal.best.listing.title

@@ -113,8 +113,14 @@ def build_deals(repo: Repository, cfg: Config, fx: FxTable, now: datetime, run_s
     s = cfg.settings
     since = now - timedelta(hours=s.filters.offer_ttl_hours)
     listings = repo.active_listings(since)
-    by_product: dict[str, list[Listing]] = {}
+    # The same deal can arrive via two feeds of one site (e.g. "hot" and "new"):
+    # keep one listing per URL so it is not counted as two offers.
+    by_url: dict[str, Listing] = {}
     for l in listings:
+        if l.url not in by_url or l.last_seen > by_url[l.url].last_seen:
+            by_url[l.url] = l
+    by_product: dict[str, list[Listing]] = {}
+    for l in by_url.values():
         by_product.setdefault(l.product_id, []).append(l)
 
     deals: list[DealView] = []
