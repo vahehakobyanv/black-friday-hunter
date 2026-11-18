@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>{{ subject }}</title>
+<style>
+  @media only screen and (max-width: 620px) {
+    .wrap { width: 100% !important; }
+    .img-cell { display: block !important; width: 100% !important; text-align: center !important; padding: 0 0 8px 0 !important; }
+    .info-cell { display: block !important; width: 100% !important; }
+    .kv td { display: block !important; width: 100% !important; }
+  }
+</style>
+</head>
+{%- set C_BG = "#f3f4f6" -%}
+{%- set C_CARD = "#ffffff" -%}
+{%- set C_TEXT = "#111827" -%}
+{%- set C_MUTED = "#6b7280" -%}
+{%- set C_LINE = "#e5e7eb" -%}
+{%- set C_ACCENT = "#111827" -%}
+{%- set LABEL_COLORS = {"EXCELLENT": "#047857", "VERY GOOD": "#15803d", "GOOD": "#2563eb", "NORMAL": "#6b7280", "NOT INTERESTING": "#9ca3af"} -%}
+{%- set STATUS_COLORS = {"NEW": "#b91c1c", "PRICE DROP": "#c2410c", "SEEN BEFORE": "#6b7280"} -%}
+
+{%- macro badge(text, color) -%}
+<span style="display:inline-block;padding:2px 7px;border-radius:10px;background:{{ color }};color:#fff;font-size:11px;font-weight:700;letter-spacing:.3px;">{{ text }}</span>
+{%- endmacro -%}
+
+{%- macro kind(k) -%}
+<span style="font-size:10px;color:{{ C_MUTED }};text-transform:uppercase;">{{ k }}</span>
+{%- endmacro -%}
+
+{%- macro deal_card(d, rank=None, compact=False) -%}
+{%- set l = d.best.listing -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ C_CARD }};border:1px solid {{ C_LINE }};border-radius:10px;margin:0 0 12px 0;">
+<tr>
+  {% if not compact %}
+  <td class="img-cell" width="130" valign="top" style="padding:12px;width:130px;">
+    {% if l.image_url %}<a href="{{ l.url }}"><img src="{{ l.image_url }}" width="120" alt="" style="display:block;width:120px;max-width:120px;height:auto;border-radius:6px;border:0;"></a>
+    {% else %}<div style="width:120px;height:90px;background:{{ C_BG }};border-radius:6px;color:{{ C_MUTED }};font-size:11px;text-align:center;line-height:90px;">no image</div>{% endif %}
+  </td>
+  {% endif %}
+  <td class="info-cell" valign="top" style="padding:12px 12px 12px {{ '12px' if compact else '0' }};">
+    <div style="margin-bottom:4px;">
+      {% if rank %}<span style="font-weight:700;color:{{ C_MUTED }};">#{{ rank }}</span>{% endif %}
+      {{ badge(d.label ~ " · " ~ ("%.0f" % d.total), LABEL_COLORS.get(d.label, "#6b7280")) }}
+      {{ badge(d.status, STATUS_COLORS.get(d.status, "#6b7280")) }}
+      {% if d.record_low %}{{ badge("RECORD LOW", "#7c3aed") }}{% endif %}
+      {% if d.watch_hit %}{{ badge("WATCHLIST TARGET HIT", "#db2777") }}{% elif d.watch %}{{ badge("WATCHLIST", "#9d174d") }}{% endif %}
+      {% if d.stale %}{{ badge("STALE · last seen " ~ ("%.0f" % d.age_hours) ~ "h ago", "#92400e") }}{% endif %}
+    </div>
+    <div style="font-size:15px;font-weight:700;line-height:1.3;margin:4px 0;"><a href="{{ l.url }}" style="color:{{ C_TEXT }};text-decoration:none;">{{ l.title }}</a></div>
+    <div style="font-size:12px;color:{{ C_MUTED }};margin-bottom:6px;">
+      {{ category_label(d.product.category) }}{% if d.product.model %} · {{ d.product.model }}{% endif %} · {{ l.retailer }} ({{ l.region }}) via {{ source_label(l.source) }}
+      {% if l.voucher_code %} · code <b>{{ l.voucher_code }}</b>{% endif %}
+    </div>
+    <table role="presentation" class="kv" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.5;">
+      <tr>
+        <td valign="top" style="width:50%;padding-right:8px;">
+          <b style="font-size:17px;">{{ money(l.last_price, l.currency) }}</b>
+          {% if l.currency != "USD" %}<span style="color:{{ C_MUTED }};">≈ {{ money(d.best.price_usd, "USD") }}</span>{% endif %}
+          {{ kind(l.price_kind) }}<br>
+          Previous: {% if l.last_reference_price %}<s>{{ money(l.last_reference_price, l.currency) }}</s> <span style="color:{{ C_MUTED }};">({{ ref_label(l.reference_kind) }})</span>{% else %}<span style="color:{{ C_MUTED }};">unavailable</span>{% endif %}<br>
+          Actual discount: {% if d.discount.actual_pct is not none %}<b>{{ "%.0f" % (d.discount.actual_pct * 100) }}%</b> <span style="color:{{ C_MUTED }};">vs {{ d.discount.basis }}</span>{% else %}<span style="color:{{ C_MUTED }};">unverifiable</span>{% endif %}<br>
+          Historical low: {% if d.stats.lowest is not none %}{{ money(d.stats.lowest, d.stats.currency) }} <span style="color:{{ C_MUTED }};">(own data since {{ d.stats.first_seen.strftime("%d %b") }}, {{ d.stats.distinct_days }} day{{ "s" if d.stats.distinct_days != 1 }})</span>{% else %}<span style="color:{{ C_MUTED }};">unavailable</span>{% endif %}<br>
+          30/90/180-day avg: {{ opt_money(d.stats.avg_30d, d.stats.currency) }} / {{ opt_money(d.stats.avg_90d, d.stats.currency) }} / {{ opt_money(d.stats.avg_180d, d.stats.currency) }}
+        </td>
+        <td valign="top" style="width:50%;">
+          Predicted Black Friday: {% if d.prediction.black_friday_price %}<b>{{ money(d.prediction.black_friday_price, d.prediction.currency) }}</b>{% else %}<span style="color:{{ C_MUTED }};">n/a</span>{% endif %} {{ kind("predicted · " ~ d.prediction.confidence ~ " confidence") }}<br>
+          Predicted Cyber Monday: {% if d.prediction.cyber_monday_price %}{{ money(d.prediction.cyber_monday_price, d.prediction.currency) }}{% else %}<span style="color:{{ C_MUTED }};">n/a</span>{% endif %}<br>
+          Advice: <b>{{ d.prediction.advice }}</b><br>
+          Delivered to Yerevan: {% if d.best.delivery.total_usd is not none %}{% set ge = "" if d.best.delivery.complete else "≥ " %}<b>{{ ge }}{{ money(d.best.delivery.total_usd, "USD") }}</b> / {{ ge }}{{ amd(d.best.delivery.total_amd) }}{% if not d.best.delivery.complete %} <span style="color:#b45309;">(some costs unknown)</span>{% endif %}{% else %}<span style="color:{{ C_MUTED }};">unavailable</span>{% endif %} {{ kind("estimated") }}<br>
+          <span style="font-size:12px;color:{{ C_MUTED }};">{{ d.best.delivery.route }}</span>
+        </td>
+      </tr>
+    </table>
+    {% if not compact %}
+    <div style="font-size:12px;color:{{ C_MUTED }};margin-top:6px;line-height:1.5;">
+      {% for line in d.best.delivery.lines %}{{ line.label }}: {% if line.amount_usd is not none %}{{ money(line.amount_usd, "USD") }}{% else %}unavailable{% endif %}{% if line.note %} ({{ line.note }}){% endif %}{{ " · " if not loop.last }}{% endfor %}
+      {% if d.best.delivery.warnings %}<br>⚠ {{ d.best.delivery.warnings | join("; ") }}{% endif %}
+    </div>
+    {% endif %}
+    <div style="font-size:13px;margin-top:8px;"><b>Why:</b> {{ d.explanation }}</div>
+    {% if d.others and not compact %}
+    <div style="font-size:12px;color:{{ C_MUTED }};margin-top:4px;">Also at:
+      {% for o in d.others[:4] %}<a href="{{ o.listing.url }}" style="color:{{ C_MUTED }};">{{ o.listing.retailer }} {{ money(o.listing.last_price, o.listing.currency) }}{% if o.delivery.total_usd is not none %} ({{ "≈" if o.delivery.complete else "≥" }}{{ money(o.delivery.total_usd, "USD") }} delivered){% endif %}</a>{{ ", " if not loop.last }}{% endfor %}
+    </div>
+    {% endif %}
+    <div style="font-size:11px;color:{{ C_MUTED }};margin-top:6px;">
+      Score: history {{ d.score.history }} · discount {{ d.score.discount }} · prediction {{ d.score.prediction }} · delivered {{ d.score.delivered_cost }} · reliability {{ d.score.reliability }}
+      · last checked {{ local_time(l.last_seen) }}
+    </div>
+    <div style="margin-top:8px;"><a href="{{ l.url }}" style="display:inline-block;background:{{ C_ACCENT }};color:#fff;text-decoration:none;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:700;">Open deal →</a></div>
+  </td>
+</tr>
+</table>
+{%- endmacro -%}
+
+{%- macro section(title, subtitle="") -%}
+<h2 style="font-size:16px;letter-spacing:.5px;margin:26px 0 4px 0;color:{{ C_TEXT }};">{{ title }}</h2>
+{% if subtitle %}<div style="font-size:12px;color:{{ C_MUTED }};margin-bottom:10px;">{{ subtitle }}</div>{% endif %}
+{%- endmacro -%}
+
+<body style="margin:0;padding:0;background:{{ C_BG }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:{{ C_TEXT }};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ C_BG }};">
+<tr><td align="center" style="padding:16px 8px;">
+<table role="presentation" class="wrap" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:640px;">
+<tr><td>
+
+  <!-- header -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111827;border-radius:12px;color:#fff;">
+    <tr><td style="padding:18px 18px 14px 18px;">
+      <div style="font-size:12px;opacity:.75;letter-spacing:1px;">BLACK FRIDAY DEAL HUNTER 2026 · YEREVAN</div>
+      <div style="font-size:22px;font-weight:800;margin-top:4px;">{{ headline }}</div>
+      <div style="font-size:13px;opacity:.85;margin-top:6px;">{{ generated_local }} · {{ countdown }}</div>
+      <div style="font-size:12px;opacity:.75;margin-top:8px;">
+        {{ deals_count }} deals ranked from {{ offers_count }} offers · {{ new_count }} new · rates: {{ fx_label }}
+      </div>
+    </td></tr>
+  </table>
+
+  {% if banners %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;">
+    <tr><td style="padding:10px 14px;font-size:13px;color:#78350f;line-height:1.5;">
+      {% for b in banners %}⚠ {{ b }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+    </td></tr>
+  </table>
+  {% endif %}
+
+  {% if sections.alerts %}
+  {{ section("🚨 IMPORTANT ALERTS", "Exceptional scores, record lows in our own history, or watchlist targets reached — not reported before at this price.") }}
+  {% for d in sections.alerts %}{{ deal_card(d, compact=True) }}{% endfor %}
+  {% endif %}
+
+  {{ section("TOP " ~ sections.top|length ~ " BEST DEALS", "Ranked by deal score (0–100). One entry per product: the cheapest trustworthy offer delivered to Yerevan.") }}
+  {% if sections.top %}
+    {% for d in sections.top %}{{ deal_card(d, rank=loop.index) }}{% endfor %}
+  {% else %}
+    <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:14px;">No qualifying deals in the last {{ ttl_hours }} hours.</div>
+  {% endif %}
+
+  {{ section("⚡ BEST OPPORTUNITIES OF THE HOUR", "Strongest offers that are new (or dropped in price) in this run.") }}
+  {% if sections.opportunities %}
+    {% for d in sections.opportunities %}{{ deal_card(d, compact=True) }}{% endfor %}
+  {% else %}
+    <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No new qualifying offers this hour — the lists above and below are the latest available.</div>
+  {% endif %}
+
+  {% if watchlist %}
+  {{ section("👀 WATCHLIST") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
+    {% for w, d in watchlist %}
+    <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};">
+      <b>{{ w.name }}</b> <span style="color:{{ C_MUTED }};">target {% if w.target_price_usd %}{{ money(w.target_price_usd, "USD") }}{% endif %}{% if w.target_delivered_usd %} / delivered {{ money(w.target_delivered_usd, "USD") }}{% endif %}</span><br>
+      {% if d %}Best now: <a href="{{ d.best.listing.url }}">{{ d.best.listing.title }}</a> — {{ money(d.best.listing.last_price, d.best.listing.currency) }} (≈{{ money(d.best.price_usd, "USD") }}) at {{ d.best.listing.retailer }}{% if d.watch_hit %} <b style="color:#db2777;">TARGET HIT</b>{% endif %}
+      {% else %}<span style="color:{{ C_MUTED }};">No matching offer in the last {{ ttl_hours }} hours.</span>{% endif %}
+    </td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {{ section("📂 CATEGORY SUMMARY", "Best deals in every category that currently has offers.") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
+    {% for key, label in category_labels.items() %}
+    {% set lst = sections.by_category.get(key, []) %}
+    <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};">
+      <b>{{ label }}</b><br>
+      {% if lst %}{% for d in lst %}<a href="{{ d.best.listing.url }}" style="color:{{ C_TEXT }};">{{ d.best.listing.title | truncate(80) }}</a> — {{ money(d.best.listing.last_price, d.best.listing.currency) }} · <span style="color:{{ LABEL_COLORS.get(d.label) }};font-weight:700;">{{ "%.0f" % d.total }}</span> · {{ d.best.listing.retailer }}{% if d.best.delivery.total_usd is not none %} · {{ "≈" if d.best.delivery.complete else "≥" }}{{ money(d.best.delivery.total_usd, "USD") }} delivered{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
+      {% else %}<span style="color:{{ C_MUTED }};">no offers right now</span>{% endif %}
+    </td></tr>
+    {% endfor %}
+  </table>
+
+  {{ section("📉 PRICE PREDICTIONS — WORTH WAITING", "Prices that may still fall before Black Friday / Cyber Monday. WAIT = backed by our own history; MAYBE WAIT = category heuristic only (low confidence).") }}
+  {% if sections.waiting %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
+    {% for d in sections.waiting %}
+    <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};">
+      <a href="{{ d.best.listing.url }}" style="color:{{ C_TEXT }};font-weight:700;">{{ d.best.listing.title | truncate(90) }}</a><br>
+      now {{ money(d.best.listing.last_price, d.best.listing.currency) }} → BF {{ opt_money(d.prediction.black_friday_price, d.prediction.currency) }} / CM {{ opt_money(d.prediction.cyber_monday_price, d.prediction.currency) }}
+      · <b>{{ d.prediction.advice }}</b> · {{ d.prediction.confidence }} confidence <span style="color:{{ C_MUTED }};">({{ d.prediction.method }})</span>
+    </td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No products currently look worth waiting for.</div>
+  {% endif %}
+
+  {{ section("ℹ SOURCES & DATA QUALITY") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:12px;">
+    {% for st in statuses %}
+    <tr><td style="padding:6px 12px;border-bottom:1px solid {{ C_LINE }};">
+      {% if st.ok and not st.note %}✅{% elif st.ok %}⏸{% else %}❌{% endif %} <b>{{ source_label(st.source) }}</b> — {% if st.ok %}{{ st.offers }} offers{% if st.skipped %}, {{ st.skipped }} skipped (non-products/invalid){% endif %}{% if st.note %} · {{ st.note }}{% endif %}{% else %}failed: {{ st.error }}{% endif %}
+    </td></tr>
+    {% endfor %}
+  </table>
+  <div style="font-size:11px;color:{{ C_MUTED }};line-height:1.6;margin:12px 4px;">
+    <b>Labels:</b> CONFIRMED = price from the retailer's own API/page · ADVERTISED = price from a deal post (community or editor) · ESTIMATED = computed from configured rates/assumptions · PREDICTED = forecast · UNVERIFIED = could not be checked.
+    Historical prices are only the prices this app has recorded itself; nothing is back-filled. Customs: {{ customs_label }}.
+    Links go to the deal page (mydealz/hotukdeals/dealnews) or the shop. Always confirm the final price at checkout.<br>
+    Report generated {{ generated_local }} · run #{{ run_id }}{% if last_email %} · previous email {{ last_email }}{% endif %}.
+  </div>
+
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

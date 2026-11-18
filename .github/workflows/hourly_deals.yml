@@ -1,0 +1,85 @@
+name: Hourly deals
+
+on:
+  schedule:
+    # Minute 17, not :00 — GitHub delays/drops more scheduled jobs at the top of the hour.
+    # Scheduled runs can still start late; the report always shows its real time.
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      send_email:
+        description: "Send the email report"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # push the database to the 'data' branch
+  actions: write    # keep the schedule alive (see last step)
+
+# Never two runs at once; a late run waits instead of cancelling the running one.
+concurrency:
+  group: deal-hunter
+  cancel-in-progress: false
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore database
+        run: bash scripts/state.sh restore
+
+      - name: Collect, analyse and email
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          BESTBUY_API_KEY: ${{ secrets.BESTBUY_API_KEY }}
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          EXCHANGE_RATE_API_KEY: ${{ secrets.EXCHANGE_RATE_API_KEY }}
+          OPTIONAL_AI_API_KEY: ${{ secrets.OPTIONAL_AI_API_KEY }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.send_email }}" = "false" ]; then
+            python -m app.main run --no-email
+          else
+            python -m app.main run
+          fi
+
+      - name: Save database
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/state.sh save
+
+      - name: Upload backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deals-db-${{ github.run_id }}
+          path: |
+            data/backup.db.gz
+            data/last_report.html
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Keep the hourly schedule alive
+        # GitHub disables schedules in repos without activity for 60 days.
+        # Re-enabling via the API (no commits) resets that timer. Once a day.
+        if: always() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$(date -u +%H)" = "03" ]; then
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/hourly_deals.yml/enable" && echo "schedule kept alive"
+          fi

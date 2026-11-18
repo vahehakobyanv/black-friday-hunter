@@ -1,0 +1,129 @@
+# Data sources and retailers.
+#
+# WHY these sources: most retailers (Amazon, Walmart, Newegg, MediaMarkt, Currys ...)
+# have no free public API and forbid automated scraping in their terms/robots.txt,
+# or block data-centre IPs such as GitHub Actions. This app does NOT bypass blocks.
+# Instead it reads permitted public deal feeds that already cover those retailers,
+# plus official free APIs where you provide a key.
+
+sources:
+  - id: mydealz_hot
+    type: pepper
+    enabled: true
+    region: DE
+    currency: EUR
+    feed_url: "https://www.mydealz.de/rss/hot"
+    site: "https://www.mydealz.de"
+  - id: mydealz_new
+    type: pepper
+    enabled: true
+    region: DE
+    currency: EUR
+    feed_url: "https://www.mydealz.de/rss/new"
+    site: "https://www.mydealz.de"
+  - id: hotukdeals_hot
+    type: pepper
+    enabled: true
+    region: UK
+    currency: GBP
+    feed_url: "https://www.hotukdeals.com/rss/hot"
+    site: "https://www.hotukdeals.com"
+  - id: hotukdeals_new
+    type: pepper
+    enabled: true
+    region: UK
+    currency: GBP
+    feed_url: "https://www.hotukdeals.com/rss/new"
+    site: "https://www.hotukdeals.com"
+  - id: dealnews
+    type: dealnews
+    enabled: true
+    region: US
+    currency: USD
+    feed_urls:
+      - "https://www.dealnews.com/?rss=1&sort=time"
+      - "https://www.dealnews.com/c39/Computers/?rss=1"
+      - "https://www.dealnews.com/c113/Computers/Upgrades-Components/Video-Cards/?rss=1"
+      - "https://www.dealnews.com/c142/Electronics/?rss=1"
+      - "https://www.dealnews.com/c159/Electronics/TVs/?rss=1"
+      - "https://www.dealnews.com/c171/Electronics/Phones-Cell-Phones/?rss=1"
+      - "https://www.dealnews.com/c191/Gaming-Toys/Video-Games/?rss=1"
+      - "https://www.dealnews.com/c304/Home-Garden/Appliances/?rss=1"
+      - "https://www.dealnews.com/c199/Home-Garden/Home-Furniture/?rss=1"
+      - "https://www.dealnews.com/c202/Clothing-Accessories/?rss=1"
+      - "https://www.dealnews.com/c280/Clothing-Accessories/Shoes/?rss=1"
+      - "https://www.dealnews.com/c287/Clothing-Accessories/Luggage-Travel-Gear/?rss=1"
+  - id: bestbuy
+    type: bestbuy
+    enabled: true            # runs only when env BESTBUY_API_KEY is set
+    region: US
+    currency: USD
+    # Best Buy Products API query: items on sale, sorted by savings.
+    queries:
+      - "onSale=true&categoryPath.name=Laptops"
+      - "onSale=true&categoryPath.name=Cell Phones"
+      - "onSale=true&categoryPath.name=TVs"
+      - "onSale=true&categoryPath.name=Video Games"
+      - "onSale=true&categoryPath.name=Computer Cards"   # don't use '&' inside values
+      - "onSale=true&categoryPath.name=Monitors"
+      - "onSale=true&categoryPath.name=Smart Home"
+    page_size: 50
+  - id: ebay
+    type: ebay
+    enabled: true            # runs only when env EBAY_CLIENT_ID + EBAY_CLIENT_SECRET are set
+    region: US
+    currency: USD
+    marketplace: EBAY_US
+    # Searches use your watchlist keywords; only new-condition, fixed-price items.
+    max_per_keyword: 10
+  - id: watchlist_pages
+    type: generic_store
+    enabled: true            # reads product URLs listed in watchlist.json (robots.txt permitting)
+    region: auto
+    currency: auto
+
+# Retailer reliability 0..1 (used for 10 % of the score and for choosing the
+# cheapest TRUSTWORTHY offer). Unknown retailers get `default_reliability`.
+# Marketplace sellers (AliExpress stores, eBay sellers) are lower on purpose.
+default_reliability: 0.55
+retailers:
+  # USA
+  "Amazon": {reliability: 0.95, aliases: ["amazon.com", "amazon.de", "amazon.co.uk", "amazon prime"]}
+  "Best Buy": {reliability: 0.95, aliases: ["bestbuy", "bestbuy.com"]}
+  "Walmart": {reliability: 0.85, aliases: ["walmart.com"]}
+  "Newegg": {reliability: 0.85, aliases: ["newegg.com"]}
+  "B&H Photo": {reliability: 0.95, aliases: ["b&h", "bhphotovideo", "b&h photo video"]}
+  "Adorama": {reliability: 0.9, aliases: ["adorama.com"]}
+  "Lenovo": {reliability: 0.9, aliases: ["lenovo.com"]}
+  "Dell": {reliability: 0.9, aliases: ["dell.com", "dell technologies"]}
+  "HP": {reliability: 0.9, aliases: ["hp.com", "hp store"]}
+  "Samsung": {reliability: 0.9, aliases: ["samsung.com"]}
+  "Apple": {reliability: 0.95, aliases: ["apple.com", "apple store"]}
+  "Nike": {reliability: 0.9, aliases: ["nike.com"]}
+  "Adidas": {reliability: 0.9, aliases: ["adidas.com", "adidas.de", "adidas.co.uk"]}
+  "Target": {reliability: 0.85, aliases: ["target.com"]}
+  "Costco": {reliability: 0.85, aliases: ["costco.com"]}
+  "Woot": {reliability: 0.85, aliases: ["woot!", "woot! an amazon company", "woot.com"]}
+  "Micro Center": {reliability: 0.9, aliases: ["microcenter"]}
+  # Germany
+  "MediaMarkt": {reliability: 0.9, aliases: ["media markt", "mediamarkt.de"]}
+  "Saturn": {reliability: 0.9, aliases: ["saturn.de"]}
+  "notebooksbilliger": {reliability: 0.9, aliases: ["notebooksbilliger.de", "nbb"]}
+  "Alternate": {reliability: 0.9, aliases: ["alternate.de"]}
+  "Cyberport": {reliability: 0.9, aliases: ["cyberport.de"]}
+  "Mindfactory": {reliability: 0.85, aliases: ["mindfactory.de"]}
+  "Otto": {reliability: 0.8, aliases: ["otto.de"]}
+  "Galaxus": {reliability: 0.85, aliases: ["galaxus.de"]}
+  "Proshop": {reliability: 0.8, aliases: ["proshop.de"]}
+  # United Kingdom
+  "Currys": {reliability: 0.9, aliases: ["currys.co.uk", "currys pc world"]}
+  "Argos": {reliability: 0.9, aliases: ["argos.co.uk"]}
+  "John Lewis": {reliability: 0.9, aliases: ["john lewis & partners", "johnlewis.com"]}
+  "Scan": {reliability: 0.85, aliases: ["scan.co.uk", "scan computers"]}
+  "Overclockers UK": {reliability: 0.85, aliases: ["overclockers", "ocuk"]}
+  "Very": {reliability: 0.75, aliases: ["very.co.uk"]}
+  "Box.co.uk": {reliability: 0.75, aliases: ["box"]}
+  # Marketplaces / international
+  "eBay": {reliability: 0.65, aliases: ["ebay.com", "ebay.de", "ebay.co.uk"]}
+  "AliExpress": {reliability: 0.5, aliases: ["aliexpress.com"]}
+  "Temu": {reliability: 0.35, aliases: []}

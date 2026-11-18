@@ -1,0 +1,145 @@
+# Product categories.
+#
+# keywords: matched (case-insensitive, word-boundary) against the title. A trailing
+#           '*' makes it a prefix: "galaxy s*" matches "Galaxy S25".
+#           Order matters: the FIRST category whose keyword matches wins, so the
+#           more specific categories (PC components) come first.
+# feed_categories: category names used by the source feeds that map here.
+# est_weight_kg: ESTIMATED shipping weight used ONLY when the source gives no
+#           weight. Always labelled "estimated weight" in the report. Edit freely.
+# bf_extra_drop_pct: HEURISTIC assumption of how much further a typical price in
+#           this category may fall between now and Black Friday. It is NOT data.
+#           Predictions built on it are labelled "heuristic, low confidence".
+# cm_extra_drop_pct: same idea for Cyber Monday vs Black Friday.
+
+categories:
+  pc_components:
+    label: "PC components"
+    keywords: ["rtx", "geforce", "radeon", "rx 7*", "rx 9*", "grafikkarte", "graphics card", "gpu",
+               "ryzen", "core i3", "core i5", "core i7", "core i9", "core ultra", "prozessor", "cpu",
+               "ddr4", "ddr5", "ram kit", "arbeitsspeicher", "nvme", "ssd", "m.2", "hdd", "festplatte",
+               "hard drive", "motherboard", "mainboard", "monitor", "netzteil", "power supply", "psu",
+               "990 pro", "wd black", "crucial", "kingston fury", "corsair vengeance"]
+    feed_categories: ["Computers", "Video Cards", "Computer Components", "PC Components", "Hardware",
+                      "Upgrades & Components", "Storage", "Monitors"]
+    est_weight_kg: 2.0
+    bf_extra_drop_pct: 5
+    cm_extra_drop_pct: 2
+  laptops:
+    label: "Computers & laptops"
+    keywords: ["laptop", "notebook", "macbook", "chromebook", "thinkpad", "zenbook", "vivobook",
+               "ideapad", "legion", "rog strix", "xps", "spectre", "envy", "desktop pc", "mac mini",
+               "imac", "mini pc", "gaming pc"]
+    feed_categories: ["Laptops", "Desktops", "Computers & Tablets"]
+    est_weight_kg: 3.5
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  smartphones:
+    label: "Smartphones & accessories"
+    keywords: ["iphone", "galaxy s*", "galaxy z*", "galaxy a*", "pixel", "smartphone", "handy",
+               "oneplus", "xiaomi", "redmi", "airpods", "galaxy buds", "earbuds", "charger",
+               "power bank", "powerbank", "ipad", "tablet", "galaxy tab"]
+    feed_categories: ["Phones", "Mobile", "Phones & Cell Phones", "Smartphones", "Tablet",
+                      "Handys & Smartphones"]
+    est_weight_kg: 1.0
+    bf_extra_drop_pct: 5
+    cm_extra_drop_pct: 2
+  gaming:
+    label: "Gaming consoles & accessories"
+    keywords: ["playstation", "ps5", "ps4", "xbox", "nintendo", "switch 2", "steam deck",
+               "dualsense", "controller", "gaming headset", "rog ally", "legion go"]
+    feed_categories: ["Gaming", "Video Games", "Consoles", "Games"]
+    est_weight_kg: 1.5
+    bf_extra_drop_pct: 5
+    cm_extra_drop_pct: 2
+  tv_electronics:
+    label: "TVs & electronics"
+    keywords: ["oled", "qled", "fernseher", "smart tv", " tv ", "soundbar", "headphones",
+               "kopfhörer", "speaker", "lautsprecher", "camera", "kamera", "projector", "beamer",
+               "kindle", "e-reader", "bose", "sony wh", "sonos"]
+    feed_categories: ["Electronics", "TVs", "Audio", "TV & Video", "Elektronik", "Audio & Hifi"]
+    est_weight_kg: 2.0
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  smart_home:
+    label: "Smart home"
+    keywords: ["smart home", "echo dot", "echo show", "alexa", "google nest", "nest hub", "ring",
+               "philips hue", "hue", "smart plug", "eero", "mesh", "router", "wifi", "wlan",
+               "fritz!box", "ip camera", "security camera", "robot vacuum", "saugroboter", "roborock"]
+    feed_categories: ["Smart Home", "Home Automation", "Broadband & Phone Contracts"]
+    est_weight_kg: 1.5
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  appliances:
+    label: "Home appliances"
+    keywords: ["washing machine", "waschmaschine", "dryer", "trockner", "dishwasher",
+               "geschirrspüler", "fridge", "kühlschrank", "air fryer", "heißluftfritteuse",
+               "coffee machine", "kaffeevollautomat", "espresso", "vacuum", "staubsauger",
+               "dyson", "microwave", "blender", "thermomix", "kettle"]
+    feed_categories: ["Appliances", "Home Appliances", "Haushalt", "Kitchen"]
+    est_weight_kg: 6.0
+    bf_extra_drop_pct: 5
+    cm_extra_drop_pct: 2
+  clothing:
+    label: "Clothing & shoes"
+    keywords: ["sneaker", "shoes", "schuhe", "jacket", "jacke", "hoodie", "t-shirt", "jeans",
+               "nike", "adidas", "puma", "new balance", "north face", "levi's", "boots"]
+    feed_categories: ["Fashion", "Clothing", "Shoes", "Fashion & Accessories", "Clothing & Accessories"]
+    est_weight_kg: 1.2
+    bf_extra_drop_pct: 10
+    cm_extra_drop_pct: 3
+  watches:
+    label: "Watches & accessories"
+    keywords: ["watch", "uhr", "smartwatch", "apple watch", "galaxy watch", "garmin", "fitbit",
+               "casio", "seiko", "sunglasses", "wallet"]
+    feed_categories: ["Watches", "Jewelry", "Wearables"]
+    est_weight_kg: 0.6
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  travel:
+    label: "Travel & luggage"
+    keywords: ["luggage", "suitcase", "koffer", "backpack", "rucksack", "samsonite", "carry-on",
+               "travel bag", "reisetasche"]
+    feed_categories: ["Luggage & Travel Gear", "Travel"]
+    est_weight_kg: 4.0
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  sports:
+    label: "Sports & fitness"
+    keywords: ["fitness", "treadmill", "laufband", "dumbbell", "hantel", "yoga", "bike",
+               "fahrrad", "e-bike", "tent", "zelt", "running", "camping", "kettlebell"]
+    feed_categories: ["Sports & Outdoors", "Sport & Outdoor", "Sports"]
+    est_weight_kg: 3.0
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  home_furniture:
+    label: "Home & furniture"
+    keywords: ["sofa", "chair", "stuhl", "desk", "schreibtisch", "mattress", "matratze",
+               "bed", "lamp", "lampe", "furniture", "möbel", "ikea", "bedding", "duvet"]
+    feed_categories: ["Home & Living", "Home Furniture", "Home & Garden", "Home", "Furniture",
+                      "Wohnen", "Garden & DIY"]
+    est_weight_kg: 5.0
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
+  books:
+    label: "Books & education"
+    keywords: ["book", "buch", "kindle unlimited", "audible", "course", "udemy", "coursera",
+               "textbook", "hardcover", "paperback"]
+    feed_categories: ["Books", "Books & Magazines", "Education", "Bücher"]
+    est_weight_kg: 0.8
+    bf_extra_drop_pct: 3
+    cm_extra_drop_pct: 1
+
+# Deals whose title matches any of these are not products (contracts, cashback,
+# vouchers, subscriptions, food) and are skipped entirely.
+non_product_keywords: ["sim only", "allnet", "tarif", "vertrag", "contract", "cashback",
+                       "gutschein", "voucher", "coupon", "subscription", "abo ", "broadband",
+                       "strom", "gas ", "versicherung", "insurance", "whisky", "wine", "beer",
+                       "flight", "hotel", "airfare", "car rental", "magazine", "gift card",
+                       "mint mobile", "wireless plan", "phone plan", "unlimited plan", "prepaid plan", "esim",
+                       "streaming", "membership",
+                       "free game", "freebie", "gratis", "kostenlos", "bulbs", "grocer"]
+non_product_feed_categories: ["Broadband & Phone Contracts", "Verträge", "Groceries", "Food & Drink",
+                              "Travel-Entertainment", "Airfare", "Hotels", "Freebies", "Kostenloses",
+                              "Gutscheine", "Vouchers", "Services & Contracts", "Lebensmittel & Haushalt",
+                              "Culture & Leisure", "Restaurants", "Health & Beauty", "Drogerie"]

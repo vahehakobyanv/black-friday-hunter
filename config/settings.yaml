@@ -1,0 +1,76 @@
+# Black Friday Deal Hunter 2026 — main settings.
+# Secrets (passwords, API keys) are NEVER stored here. They come from environment
+# variables / GitHub Secrets. See .env.example.
+
+app:
+  name: "Black Friday Hunter"
+  timezone: "Asia/Yerevan"          # used for email subject/time stamps
+  black_friday: "2026-11-27"
+  cyber_monday: "2026-11-30"
+
+email:
+  # Sender and recipients. Overridable with env GMAIL_ADDRESS / EMAIL_TO (comma-separated).
+  sender: "vahehakobyanv@gmail.com"
+  recipients: ["vahehakobyanv@gmail.com"]
+  top_n: 10
+  opportunities_n: 5
+  per_category_n: 2
+  waiting_n: 8
+  alerts_n: 8
+  # Quiet hours in local time, e.g. [1, 8] = no email from 01:00 to 07:59.
+  # Empty list = send every hour (default, as requested).
+  quiet_hours: []
+
+collection:
+  user_agent: "BFDealHunter/1.0 (personal price monitor; +https://github.com/vahehakobyanv/black-friday-hunter)"
+  timeout_seconds: 20
+  max_retries: 3
+  # Minimum seconds between two requests to the same host.
+  per_host_delay_seconds: 2.0
+  # Max detail pages fetched per Pepper site per run (to read reference price etc.).
+  pepper_enrich_per_site: 20
+  # Re-read a deal's detail page at most this often.
+  pepper_enrich_refresh_hours: 6
+
+filters:
+  min_price_usd: 15            # ignore tiny items (cables, candles ...)
+  min_pepper_temperature: 0    # negative temperature = community voted it as bad
+  exclude_categories: ["other"]
+  # How long an offer stays in the report after it was last seen in a feed.
+  offer_ttl_hours: 48
+  # Offers older than this (since last seen) are labelled STALE in the email.
+  stale_after_hours: 3
+
+history:
+  # Record a new observation for an unchanged price at most every N hours.
+  unchanged_observation_every_hours: 6
+  # Minimum distinct days of own history before 30-day stats are trusted.
+  min_days_for_stats: 3
+  retention_days: 400
+
+scoring:
+  # Weights must add up to 100.
+  weights:
+    history: 30
+    discount: 20
+    prediction: 20
+    delivered_cost: 20
+    reliability: 10
+  # When the app has no own price history yet, the history slot is filled by
+  # cross-market evidence (Pepper "next best price" + community votes),
+  # capped at this share of the 30 points. Clearly labelled in the email.
+  history_proxy_max_share: 0.7
+  # Credibility multiplier for each kind of reference ("was") price.
+  reference_credibility:
+    own_history: 1.0
+    next_best_price: 0.9     # price of the same item at another shop (Pepper)
+    regular_price: 0.8       # retailer API regular price (Best Buy, eBay)
+    list_price: 0.6          # "down from"/MSRP claims (often inflated)
+  classes:
+    EXCELLENT: 90
+    VERY GOOD: 80
+    GOOD: 70
+    NORMAL: 50
+
+database:
+  path: "data/deals.db"
