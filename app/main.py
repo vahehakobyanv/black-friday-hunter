@@ -34,6 +34,10 @@ def cmd_run(args) -> int:
     # Exit non-zero only if the email was required and failed: the workflow still
     # saves the database (that step runs with `if: always()`).
     if not args.no_email and not outcome.email_sent:
+        if any("EmailNotConfigured" in e for e in outcome.errors):
+            # Secrets not added yet: data is still collected and saved; don't turn every run red.
+            print("::warning::Email not sent: add the GMAIL_APP_PASSWORD secret (see README).")
+            return 0
         return 2
     return 0
 
