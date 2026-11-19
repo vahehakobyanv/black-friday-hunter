@@ -45,7 +45,21 @@ def make_engine(path: Path | str) -> Engine:
         cur.close()
 
     Base.metadata.create_all(engine)
+    _add_missing_columns(engine)
     return engine
+
+
+def _add_missing_columns(engine: Engine) -> None:
+    """Tiny forward-only migration: add columns that newer code expects to
+    tables created by older versions (the database lives on across releases)."""
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table.name})")}
+            for col in table.columns:
+                if col.name not in existing:
+                    coltype = col.type.compile(dialect=engine.dialect)
+                    conn.exec_driver_sql(f"ALTER TABLE {table.name} ADD COLUMN {col.name} {coltype}")
+                    log.info("database migrated: added %s.%s", table.name, col.name)
 
 
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:
@@ -233,6 +247,16 @@ class Repository:
             n.times_sent += 1
             n.best_price_usd_sent = min(n.best_price_usd_sent, price_usd)
             n.alerted = n.alerted or alerted
+
+    def mark_alerted(self, product_id: str, price_usd: float, now: datetime) -> None:
+        n = self.s.get(Notification, product_id)
+        if n is None:
+            n = Notification(product_id=product_id, first_sent_at=now, last_sent_at=now,
+                             best_price_usd_sent=price_usd, times_sent=1, alerted=True)
+            self.s.add(n)
+        n.alerted = True
+        n.alerted_at = now
+        n.alerted_price_usd = price_usd if n.alerted_price_usd is None else min(n.alerted_price_usd, price_usd)
 
     # ------------------------------------------------------------------ runs
     def start_run(self, now: datetime) -> Run:

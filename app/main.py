@@ -28,7 +28,8 @@ def cmd_run(args) -> int:
     for st in outcome.statuses:
         print(f"  {'OK ' if st.ok else 'ERR'} {st.source:<18} offers={st.offers:<4} skipped={st.skipped:<4} "
               f"{st.note or st.error or ''}")
-    print(f"deals ranked: {outcome.deals} | email sent: {outcome.email_sent} | report: {outcome.report_path}")
+    print(f"deals ranked: {outcome.deals} | email sent: {outcome.email_sent} | alerts: {outcome.alerts} "
+          f"(alert email: {outcome.alert_email_sent}, telegram: {outcome.telegram_sent}) | report: {outcome.report_path}")
     if outcome.errors:
         print("errors:", *outcome.errors, sep="\n  ")
     # Exit non-zero only if the email was required and failed: the workflow still
@@ -54,6 +55,27 @@ def cmd_test_email(_args) -> int:
                "<p>✅ Gmail settings work. Hourly reports will arrive at this address.</p>",
                "Gmail settings work. Hourly reports will arrive at this address.")
     print("test email sent")
+    return 0
+
+
+def cmd_telegram_setup(_args) -> int:
+    """Print the chat id(s) that messaged your bot, and send a test message."""
+    from app.notifications.telegram import discover_chat_ids, send_telegram
+
+    cfg = load_config()
+    token = cfg.secrets.telegram_bot_token
+    if not token:
+        print("Set TELEGRAM_BOT_TOKEN first (from @BotFather).")
+        return 1
+    chats = discover_chat_ids(token)
+    if not chats:
+        print("No messages found. Open your bot in Telegram, press Start / send 'hi', then run this again.")
+        return 1
+    for chat_id, name in chats:
+        print(f"chat id: {chat_id}  ({name})")
+    target = cfg.secrets.telegram_chat_id or chats[0][0]
+    send_telegram(token, target, "✅ Black Friday Hunter is connected. Alerts will arrive here.")
+    print(f"test message sent to {target}")
     return 0
 
 
@@ -85,9 +107,11 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--no-email", action="store_true")
     sub.add_parser("test-email")
     sub.add_parser("stats")
+    sub.add_parser("telegram-setup")
     args = parser.parse_args(argv)
     setup_logging(args.log_level, json_format=not args.plain_logs)
-    handlers = {"run": cmd_run, "test-email": cmd_test_email, "stats": cmd_stats, None: cmd_run}
+    handlers = {"run": cmd_run, "test-email": cmd_test_email, "stats": cmd_stats,
+                "telegram-setup": cmd_telegram_setup, None: cmd_run}
     if args.cmd is None:
         args.no_email = False
     return handlers[args.cmd](args)

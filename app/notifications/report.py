@@ -82,7 +82,8 @@ def build_banners(cfg: Config, fx: FxTable, statuses: list[CollectorStatus], dea
 
 
 def render_report(*, sections: ReportSections, deals: list[DealView], statuses: list[CollectorStatus], fx: FxTable,
-                  cfg: Config, now: datetime, run_id: int, last_email: datetime | None, offers_count: int) -> RenderedReport:
+                  cfg: Config, now: datetime, run_id: int, last_email: datetime | None, offers_count: int,
+                  alert_only: bool = False) -> RenderedReport:
     tz = ZoneInfo(cfg.settings.app.timezone)
     local_now = now.replace(tzinfo=timezone.utc).astimezone(tz)
 
@@ -104,10 +105,19 @@ def render_report(*, sections: ReportSections, deals: list[DealView], statuses: 
         subject += f" | {len(sections.alerts)} alert{'s' if len(sections.alerts) != 1 else ''}"
     elif not sections.opportunities:
         subject += " | no new deals"
+    if alert_only:
+        first = sections.alerts[0].best.listing if sections.alerts else None
+        subject = (f"🔥 Deal alert | {first.title[:45]} {money(first.last_price, first.currency)}"
+                   if first else "🔥 Deal alert")
+        if len(sections.alerts) > 1:
+            subject += f" +{len(sections.alerts) - 1} more"
+        subject += f" | {local_now.day} {local_now:%b %H:%M}"
     regime = cfg.shipping.customs.regime
     html = env.get_template("report.html.j2").render(
         subject=subject,
-        headline=(f"{len(sections.alerts)} alert(s) · top deal {sections.top[0].total:.0f}/100" if sections.top and sections.alerts
+        alert_only=alert_only,
+        headline=(f"🔥 {len(sections.alerts)} instant alert(s)" if alert_only else
+                  f"{len(sections.alerts)} alert(s) · top deal {sections.top[0].total:.0f}/100" if sections.top and sections.alerts
                   else f"Top deal {sections.top[0].total:.0f}/100" if sections.top else "No qualifying deals right now"),
         generated_local=local_now.strftime("%d %b %Y, %H:%M") + " Yerevan",
         countdown=countdown(local_now.date(), cfg),
@@ -126,7 +136,10 @@ def render_report(*, sections: ReportSections, deals: list[DealView], statuses: 
         run_id=run_id,
         last_email=local_time(last_email) if last_email else None,
     )
-    return RenderedReport(subject=subject, html=html, text=render_text(sections, subject))
+    text = render_text(sections, subject) if not alert_only else "\n".join(
+        [subject, ""] + [f"- {d.best.listing.title} — {money(d.best.listing.last_price, d.best.listing.currency)} "
+                         f"({'; '.join(d.alert_reasons)})\n  {d.best.listing.url}" for d in sections.alerts])
+    return RenderedReport(subject=subject, html=html, text=text)
 
 
 def _ordered_category_labels(cfg: Config) -> dict[str, str]:

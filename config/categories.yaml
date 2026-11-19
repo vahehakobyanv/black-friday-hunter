@@ -166,6 +166,8 @@ non_product_keywords: ["sim only", "allnet", "tarif", "vertrag", "contract", "ca
                        "flight", "hotel", "airfare", "car rental", "magazine", "gift card",
                        "mint mobile", "wireless plan", "phone plan", "unlimited plan", "prepaid plan", "esim",
                        "streaming", "membership",
+                       "black friday deals", "cyber monday deals", "deals at", "deals on", "sale at",
+                       "sammeldeal", "sammelthread", "sale bei", "angebote bei", "deals bei",
                        "free game", "freebie", "gratis", "kostenlos", "bulbs", "grocer"]
 non_product_feed_categories: ["Broadband & Phone Contracts", "Verträge", "Groceries", "Food & Drink",
                               "Travel-Entertainment", "Airfare", "Hotels", "Freebies", "Kostenloses",

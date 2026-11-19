@@ -2,9 +2,11 @@ name: Hourly deals
 
 on:
   schedule:
-    # Minute 17, not :00 — GitHub delays/drops more scheduled jobs at the top of the hour.
-    # Scheduled runs can still start late; the report always shows its real time.
+    # GitHub often delays or silently drops scheduled runs, so there are two
+    # chances per hour (not at :00, the busiest minute). Extra runs are cheap:
+    # the email still goes out at most every 4 hours (config/settings.yaml).
     - cron: "17 * * * *"
+    - cron: "47 * * * *"
   workflow_dispatch:
     inputs:
       send_email:
@@ -49,6 +51,8 @@ jobs:
           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
           EXCHANGE_RATE_API_KEY: ${{ secrets.EXCHANGE_RATE_API_KEY }}
           OPTIONAL_AI_API_KEY: ${{ secrets.OPTIONAL_AI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.send_email }}" = "false" ]; then
             python -m app.main run --no-email

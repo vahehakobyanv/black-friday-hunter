@@ -25,7 +25,7 @@ email:
   quiet_hours: [0, 8]
   # Categories you care most about: shown first in the category summary,
   # with more deals each (focus_per_category instead of per_category_n).
-  focus_categories: ["gaming", "tv_electronics", "kitchen", "appliances", "home_furniture", "smart_home"]
+  focus_categories: ["gaming", "laptops", "smartphones", "tv_electronics", "kitchen", "home_furniture", "appliances"]
   focus_per_category: 5
 
 collection:
@@ -78,6 +78,37 @@ scoring:
     VERY GOOD: 80
     GOOD: 70
     NORMAL: 50
+
+# Your priorities. Tiers 1 and 2 come from watchlist.json (field "priority");
+# tier 3 here is whole categories. Shown at the top of every email in this order.
+priorities:
+  labels:
+    1: "PlayStation & MacBook"
+    2: "Tablets & electronics"
+    3: "Home & kitchen"
+  categories:
+    3: ["kitchen", "home_furniture", "appliances"]
+  per_item: 3              # best deals shown per watchlist item
+  per_category_tier: 8     # best deals shown for a category tier
+
+# Instant alerts: sent at the next hourly run (outside quiet hours) without
+# waiting for the 4-hourly report. A product is alerted again only if its price
+# drops another `realert_drop_pct` percent.
+alerts:
+  enabled: true
+  min_score: 80                 # any deal scoring VERY GOOD or better
+  priority1_min_score: 65       # your priority-1 watchlist items alert earlier
+  record_low_min_score: 70      # record low in own history AND at least GOOD
+  watchlist_target_hit: true    # target_price_usd / target_delivered_usd reached
+  realert_drop_pct: 3
+  max_per_message: 6
+
+# Telegram (optional): needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID secrets.
+telegram:
+  enabled: true
+  send_reports: true      # short summary whenever the email report goes out
+  send_alerts: true       # instant alerts
+  summary_n: 5
 
 database:
   path: "data/deals.db"

@@ -141,6 +141,9 @@ class DeliveryEstimate(BaseModel):
     weight_kg: float | None
     weight_is_estimate: bool
     warnings: list[str] = Field(default_factory=list)
+    customs_value_eur: float | None = None   # value counted against the duty-free limit
+    duty_eur: float | None = None
+    duty_free_limit_eur: float | None = None
 
 
 class ScoreBreakdown(BaseModel):

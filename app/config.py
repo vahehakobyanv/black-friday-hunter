@@ -80,6 +80,31 @@ class ScoringCfg(BaseModel):
         return self
 
 
+class PrioritiesCfg(BaseModel):
+    labels: dict[int, str] = Field(default_factory=lambda: {1: "Top priority", 2: "Priority 2", 3: "Priority 3"})
+    # Whole categories that belong to a priority tier (in addition to watchlist items).
+    categories: dict[int, list[str]] = Field(default_factory=dict)
+    per_item: int = 3
+    per_category_tier: int = 8
+
+
+class AlertsCfg(BaseModel):
+    enabled: bool = True
+    min_score: float = 80
+    priority1_min_score: float = 65
+    record_low_min_score: float = 70
+    watchlist_target_hit: bool = True
+    realert_drop_pct: float = 3
+    max_per_message: int = 6
+
+
+class TelegramCfg(BaseModel):
+    enabled: bool = True          # only active when TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are set
+    send_reports: bool = True     # short summary each time the email report is sent
+    send_alerts: bool = True
+    summary_n: int = 5
+
+
 class DatabaseCfg(BaseModel):
     path: str = "data/deals.db"
 
@@ -92,6 +117,9 @@ class Settings(BaseModel):
     history: HistoryCfg
     scoring: ScoringCfg
     database: DatabaseCfg
+    priorities: PrioritiesCfg = Field(default_factory=PrioritiesCfg)
+    alerts: AlertsCfg = Field(default_factory=AlertsCfg)
+    telegram: TelegramCfg = Field(default_factory=TelegramCfg)
 
 
 # ---------------------------------------------------------------- stores.yaml
@@ -158,6 +186,7 @@ class CategoriesCfg(BaseModel):
 # ---------------------------------------------------------------- watchlist.json
 class WatchItem(BaseModel):
     name: str
+    priority: int = 2
     keywords: list[str]
     exclude: list[str] = Field(default_factory=list)
     target_price_usd: float | None = None
@@ -246,6 +275,8 @@ class Secrets(BaseModel):
     ebay_client_secret: str | None = None
     exchange_rate_api_key: str | None = None
     optional_ai_api_key: str | None = None
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
 
     @classmethod
     def from_env(cls) -> "Secrets":
@@ -271,6 +302,8 @@ class Secrets(BaseModel):
             ebay_client_secret=env("EBAY_CLIENT_SECRET"),
             exchange_rate_api_key=env("EXCHANGE_RATE_API_KEY"),
             optional_ai_api_key=env("OPTIONAL_AI_API_KEY"),
+            telegram_bot_token=env("TELEGRAM_BOT_TOKEN"),
+            telegram_chat_id=env("TELEGRAM_CHAT_ID"),
         )
 
 

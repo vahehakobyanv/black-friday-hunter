@@ -47,6 +47,7 @@
       {{ badge(d.label ~ " · " ~ ("%.0f" % d.total), LABEL_COLORS.get(d.label, "#6b7280")) }}
       {{ badge(d.status, STATUS_COLORS.get(d.status, "#6b7280")) }}
       {% if d.record_low %}{{ badge("RECORD LOW", "#7c3aed") }}{% endif %}
+      {% if d.best.delivery.duty_eur == 0 %}{{ badge("DUTY-FREE ≤€" ~ ("%.0f" % d.best.delivery.duty_free_limit_eur), "#0f766e") }}{% elif d.best.delivery.duty_eur %}{{ badge("CUSTOMS ≈€" ~ ("%.0f" % d.best.delivery.duty_eur), "#b45309") }}{% endif %}
       {% if d.watch_hit %}{{ badge("WATCHLIST TARGET HIT", "#db2777") }}{% elif d.watch %}{{ badge("WATCHLIST", "#9d174d") }}{% endif %}
       {% if d.stale %}{{ badge("STALE · last seen " ~ ("%.0f" % d.age_hours) ~ "h ago", "#92400e") }}{% endif %}
     </div>
@@ -81,6 +82,7 @@
       {% if d.best.delivery.warnings %}<br>⚠ {{ d.best.delivery.warnings | join("; ") }}{% endif %}
     </div>
     {% endif %}
+    {% if d.alert_reasons %}<div style="font-size:13px;margin-top:8px;color:#b91c1c;"><b>Alert:</b> {{ d.alert_reasons | join("; ") }}</div>{% endif %}
     <div style="font-size:13px;margin-top:8px;"><b>Why:</b> {{ d.explanation }}</div>
     {% if d.others and not compact %}
     <div style="font-size:12px;color:{{ C_MUTED }};margin-top:4px;">Also at:
@@ -129,8 +131,36 @@
   {% endif %}
 
   {% if sections.alerts %}
-  {{ section("🚨 IMPORTANT ALERTS", "Exceptional scores, record lows in our own history, or watchlist targets reached — not reported before at this price.") }}
-  {% for d in sections.alerts %}{{ deal_card(d, compact=True) }}{% endfor %}
+  {{ section("🚨 IMPORTANT ALERTS", "Very good scores, your priority items, record lows in our own history, or your target prices — not alerted before at this price.") }}
+  {% for d in sections.alerts %}{{ deal_card(d, compact=alert_only == false) }}{% endfor %}
+  {% endif %}
+
+  {% if not alert_only %}
+  {% if sections.priorities %}
+  {{ section("🎯 YOUR PRIORITIES", "Best current offers for the things you want most, in your order. Edit config/watchlist.json to change.") }}
+  {% for tier in sections.priorities %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;margin-bottom:10px;">
+    <tr><td style="padding:9px 12px;background:#f9fafb;border-bottom:1px solid {{ C_LINE }};border-radius:10px 10px 0 0;"><b>{{ tier.tier }}. {{ tier.label }}</b></td></tr>
+    {% for name, lst in tier.groups %}
+    <tr><td style="padding:8px 12px;border-bottom:1px solid {{ C_LINE }};">
+      <div style="font-weight:700;margin-bottom:3px;">{{ name }}</div>
+      {% if lst %}
+        {% for d in lst %}
+        <div style="margin:3px 0;line-height:1.45;">
+          <span style="color:{{ LABEL_COLORS.get(d.label) }};font-weight:700;">{{ "%.0f" % d.total }}</span>
+          <a href="{{ d.best.listing.url }}" style="color:{{ C_TEXT }};">{{ d.best.listing.title | truncate(85) }}</a>
+          — <b>{{ money(d.best.listing.last_price, d.best.listing.currency) }}</b>{% if d.best.listing.currency != "USD" %} (≈{{ money(d.best.price_usd, "USD") }}){% endif %}
+          · {{ d.best.listing.retailer }}
+          {% if d.best.delivery.total_usd is not none %}· 📦 {{ "≈" if d.best.delivery.complete else "≥" }}{{ money(d.best.delivery.total_usd, "USD") }}{% endif %}
+          {% if d.best.delivery.duty_eur %}<span style="color:#b45309;">(customs ≈€{{ "%.0f" % d.best.delivery.duty_eur }})</span>{% endif %}
+          {% if d.status != "SEEN BEFORE" %}<span style="color:{{ STATUS_COLORS.get(d.status) }};font-weight:700;font-size:11px;">{{ d.status }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}<span style="color:{{ C_MUTED }};">no offers right now</span>{% endif %}
+    </td></tr>
+    {% endfor %}
+  </table>
+  {% endfor %}
   {% endif %}
 
   {{ section("TOP " ~ sections.top|length ~ " BEST DEALS", "Ranked by deal score (0–100). One entry per product: the cheapest trustworthy offer delivered to Yerevan.") }}
@@ -145,6 +175,23 @@
     {% for d in sections.opportunities %}{{ deal_card(d, compact=True) }}{% endfor %}
   {% else %}
     <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No new qualifying offers since the last email — the lists above and below are the latest available.</div>
+  {% endif %}
+
+  {% if sections.parcel %}
+  {{ section("📦 CUSTOMS €" ~ ("%.0f" % sections.parcel.limit_eur) ~ " PLANNER", "Duty-free status of your priority items and the top deals. Value = product price + shipping to the forwarder.") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
+    {% for r in sections.parcel.rows %}
+    <tr><td style="padding:7px 12px;border-bottom:1px solid {{ C_LINE }};line-height:1.45;">
+      {% if r.duty_free %}✅{% else %}⚠️{% endif %}
+      <a href="{{ r.deal.best.listing.url }}" style="color:{{ C_TEXT }};">{{ r.deal.best.listing.title | truncate(70) }}</a> — value €{{ "%.0f" % r.value_eur }}
+      {% if r.duty_free %}<span style="color:#0f766e;">duty-free — order it as its own parcel</span>
+      {% else %}<span style="color:#b45309;">customs ≈€{{ "%.0f" % r.duty_eur }}</span>{% if r.max_duty_free_price and r.max_duty_free_price > 0 %} <span style="color:{{ C_MUTED }};">(duty-free if the price falls to ≤{{ money(r.max_duty_free_price, r.currency) }})</span>{% endif %}{% endif %}
+    </td></tr>
+    {% endfor %}
+    {% for t in sections.parcel.tips %}
+    <tr><td style="padding:7px 12px;border-bottom:1px solid {{ C_LINE }};font-size:12px;color:{{ C_MUTED }};">💡 {{ t }}</td></tr>
+    {% endfor %}
+  </table>
   {% endif %}
 
   {% if watchlist %}
@@ -187,6 +234,9 @@
   <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No products currently look worth waiting for.</div>
   {% endif %}
 
+  {% endif %}{# not alert_only #}
+
+  {% if not alert_only %}
   {{ section("ℹ SOURCES & DATA QUALITY") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:12px;">
     {% for st in statuses %}
@@ -195,7 +245,9 @@
     </td></tr>
     {% endfor %}
   </table>
+  {% endif %}
   <div style="font-size:11px;color:{{ C_MUTED }};line-height:1.6;margin:12px 4px;">
+    {% if alert_only %}This is an instant alert. The full report comes with the next 4-hourly email.<br>{% endif %}
     <b>Labels:</b> CONFIRMED = price from the retailer's own API/page · ADVERTISED = price from a deal post (community or editor) · ESTIMATED = computed from configured rates/assumptions · PREDICTED = forecast · UNVERIFIED = could not be checked.
     Historical prices are only the prices this app has recorded itself; nothing is back-filled. Customs: {{ customs_label }}.
     Links go to the deal page (mydealz/hotukdeals/dealnews) or the shop. Always confirm the final price at checkout.<br>

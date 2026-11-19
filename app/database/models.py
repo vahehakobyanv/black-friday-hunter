@@ -116,6 +116,8 @@ class Notification(Base):
     best_price_usd_sent: Mapped[float] = mapped_column(Float)
     times_sent: Mapped[int] = mapped_column(Integer, default=1)
     alerted: Mapped[bool] = mapped_column(Boolean, default=False)
+    alerted_price_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    alerted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class EnrichmentCache(Base):

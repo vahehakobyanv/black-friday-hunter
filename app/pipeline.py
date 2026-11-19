@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from app.analysis.categorize import NON_PRODUCT, OTHER, categorize
-from app.analysis.ranking import build_deals, build_sections
+from app.analysis.ranking import build_deals, build_sections, select_alerts
 from app.collectors.base import CollectContext
 from app.collectors.registry import build_collectors
 from app.config import Config
@@ -28,6 +28,7 @@ from app.database.repository import Repository, make_engine, make_session_factor
 from app.models.schemas import CollectorStatus
 from app.notifications.gmail import send_email
 from app.notifications.report import RenderedReport, render_report
+from app.notifications.telegram import format_alerts, format_summary, send_telegram
 from app.shipping.currency import FxTable, load_rates
 from app.utils.http import PoliteClient
 
@@ -45,6 +46,9 @@ class RunOutcome:
     subject: str | None
     errors: list[str] = field(default_factory=list)
     email_skipped: str | None = None
+    alerts: int = 0
+    alert_email_sent: bool = False
+    telegram_sent: bool = False
 
 
 def utcnow() -> datetime:
@@ -103,6 +107,8 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
     statuses: list[CollectorStatus] = []
     offers_total = 0
     email_sent = False
+    alert_sent = False
+    telegram_sent = False
     skipped_reason: str | None = None
     subject = None
 
@@ -165,10 +171,13 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
         # ---------------------------------------------------------------- analysis + report
         report: RenderedReport | None = None
         deals = []
+        sections = None
+        alerts: list = []
+        last = repo.last_email_run()
         try:
             deals = build_deals(repo, cfg, fx, now, run_started=now)
-            sections = build_sections(deals, cfg)
-            last = repo.last_email_run()
+            alerts = select_alerts(deals, cfg, repo)
+            sections = build_sections(deals, cfg, alerts=alerts, fx=fx)
             report = render_report(sections=sections, deals=deals, statuses=statuses, fx=fx, cfg=cfg, now=now,
                                    run_id=run_id, last_email=last.started_at if last else None,
                                    offers_count=offers_total)
@@ -179,6 +188,7 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
             log.exception("analysis/report failed")
             errors.append(f"report: {exc}")
             session.rollback()
+            alerts = []
             if report_path.exists():
                 prev = report_path.read_text(encoding="utf-8")
                 warn = ('<div style="background:#fee2e2;padding:12px;font-family:sans-serif;">'
@@ -188,32 +198,72 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
                                         html=warn + prev, text="This hour's analysis failed; see HTML for the previous report.")
                 subject = report.subject
 
-        # ---------------------------------------------------------------- email
+        # ---------------------------------------------------------------- email report / instant alerts
+        s = cfg.secrets
+        recipients = s.email_to or cfg.settings.email.recipients
+        sender = s.gmail_address or cfg.settings.email.sender
+        quiet = in_quiet_hours(cfg, now)
+        alerts_delivered = False
         if report is not None and send:
-            last = repo.last_email_run()
             send_now, why = should_send_email(cfg, now, last.started_at if last else None)
             if not send_now:
                 log.info("email skipped: %s", why)
                 skipped_reason = why
             else:
-                s = cfg.secrets
-                recipients = s.email_to or cfg.settings.email.recipients
                 try:
-                    send_email(s.gmail_address or cfg.settings.email.sender, s.gmail_app_password, recipients,
-                               report.subject, report.html, report.text)
+                    send_email(sender, s.gmail_app_password, recipients, report.subject, report.html, report.text)
                     email_sent = True
-                    if deals:
-                        sections_obj = build_sections(deals, cfg)
-                        notified = {d.product.id: d for d in sections_obj.top + sections_obj.opportunities
-                                    + sections_obj.alerts + sections_obj.waiting}
-                        for lst in sections_obj.by_category.values():
+                    alerts_delivered = True   # the report contains the alerts section
+                    if sections is not None:
+                        notified = {d.product.id: d for d in sections.top + sections.opportunities
+                                    + sections.alerts + sections.waiting}
+                        for lst in sections.by_category.values():
                             notified.update({d.product.id: d for d in lst})
-                        alert_ids = {d.product.id for d in sections_obj.alerts}
+                        for tier in sections.priorities:
+                            for _n, lst in tier.groups:
+                                notified.update({d.product.id: d for d in lst})
+                        alert_ids = {d.product.id for d in alerts}
                         for pid, d in notified.items():
                             repo.mark_notified(pid, d.best.price_usd, now, alerted=pid in alert_ids)
                 except Exception as exc:
                     log.error("email failed: %s", exc)
                     errors.append(f"email: {type(exc).__name__}: {exc}")
+
+            # Instant alert email between the 4-hourly reports.
+            if alerts and not email_sent and not quiet and sections is not None:
+                try:
+                    alert_mail = render_report(sections=sections, deals=deals, statuses=statuses, fx=fx, cfg=cfg,
+                                               now=now, run_id=run_id, last_email=last.started_at if last else None,
+                                               offers_count=offers_total, alert_only=True)
+                    send_email(sender, s.gmail_app_password, recipients, alert_mail.subject, alert_mail.html,
+                               alert_mail.text)
+                    alerts_delivered = True
+                    alert_sent = True
+                except Exception as exc:
+                    log.error("alert email failed: %s", exc)
+                    if "EmailNotConfigured" not in type(exc).__name__:
+                        errors.append(f"alert email: {type(exc).__name__}: {exc}")
+
+        # ---------------------------------------------------------------- Telegram
+        tg = cfg.settings.telegram
+        if send and tg.enabled and s.telegram_bot_token and s.telegram_chat_id and not quiet and sections is not None:
+            when = now.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(cfg.settings.app.timezone)).strftime("%d %b %H:%M")
+            try:
+                if tg.send_alerts and alerts:
+                    send_telegram(s.telegram_bot_token, s.telegram_chat_id, format_alerts(alerts, when))
+                    alerts_delivered = True
+                    telegram_sent = True
+                if tg.send_reports and email_sent and report is not None:
+                    send_telegram(s.telegram_bot_token, s.telegram_chat_id,
+                                  format_summary(sections, report.subject, tg.summary_n))
+                    telegram_sent = True
+            except Exception as exc:
+                log.error("telegram failed: %s", exc)
+                errors.append(f"telegram: {type(exc).__name__}: {exc}")
+
+        if alerts_delivered:
+            for d in alerts:
+                repo.mark_alerted(d.product.id, d.best.price_usd, now)
 
         # ---------------------------------------------------------------- finish
         try:
@@ -232,4 +282,5 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
     engine.dispose()
     return RunOutcome(run_id=run_id, statuses=statuses, offers=offers_total, deals=len(deals), email_sent=email_sent,
                       report_path=report_path if report_path.exists() else None, subject=subject, errors=errors,
-                      email_skipped=skipped_reason)
+                      email_skipped=skipped_reason, alerts=len(alerts), alert_email_sent=alert_sent,
+                      telegram_sent=telegram_sent)

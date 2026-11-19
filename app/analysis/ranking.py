@@ -56,6 +56,8 @@ class DealView:
     watch_hit: bool = False
     record_low: bool = False
     in_this_run: bool = False
+    priority: int | None = None          # 1/2 from watchlist, 3.. from priority categories
+    alert_reasons: list[str] = field(default_factory=list)
 
     @property
     def total(self) -> float:
@@ -78,6 +80,12 @@ def watch_matches(title: str, cfg: Config) -> list[WatchItem]:
         if any(contains_phrase(title, k) for k in w.keywords) and not any(contains_phrase(title, x) for x in w.exclude):
             out.append(w)
     return out
+
+
+def deal_priority(category: str, watch: list[WatchItem], cfg: Config) -> int | None:
+    tiers = [w.priority for w in watch]
+    tiers += [tier for tier, cats in cfg.settings.priorities.categories.items() if category in cats]
+    return min(tiers) if tiers else None
 
 
 def _explain(d: DealView, fx: FxTable) -> str:
@@ -185,10 +193,35 @@ def build_deals(repo: Repository, cfg: Config, fx: FxTable, now: datetime, run_s
             record_low=bool(stats.prior_lowest is not None and bl.last_price < stats.prior_lowest * 0.999),
             in_this_run=any(o.listing.last_seen >= run_started for o in offers),
         )
+        d.priority = deal_priority(product.category, watch, cfg)
         d.explanation = _explain(d, fx)
         deals.append(d)
     deals.sort(key=lambda d: (-d.total, d.best.delivered_usd))
     return deals
+
+
+@dataclass
+class PriorityTier:
+    tier: int
+    label: str
+    groups: list[tuple[str, list[DealView]]]   # (watch item or category label, best deals)
+
+
+@dataclass
+class ParcelRow:
+    deal: DealView
+    value_eur: float
+    duty_eur: float
+    duty_free: bool
+    max_duty_free_price: float | None      # in the listing currency
+    currency: str
+
+
+@dataclass
+class ParcelPlan:
+    limit_eur: float
+    rows: list[ParcelRow]
+    tips: list[str]
 
 
 @dataclass
@@ -200,9 +233,12 @@ class ReportSections:
     alerts: list[DealView]
     watchlist: list[tuple[WatchItem, DealView | None]]
     new_count: int
+    priorities: list[PriorityTier] = field(default_factory=list)
+    parcel: ParcelPlan | None = None
 
 
-def build_sections(deals: list[DealView], cfg: Config) -> ReportSections:
+def build_sections(deals: list[DealView], cfg: Config, alerts: list[DealView] | None = None,
+                   fx: FxTable | None = None) -> ReportSections:
     e = cfg.settings.email
     normal_min = cfg.settings.scoring.classes.get("NORMAL", 50)
     top = deals[: e.top_n]
@@ -216,15 +252,120 @@ def build_sections(deals: list[DealView], cfg: Config) -> ReportSections:
             lst.append(d)
     waiting = sorted((d for d in deals if d.prediction.advice in ("WAIT", "MAYBE WAIT") and d.total >= normal_min),
                      key=lambda d: (d.prediction.advice != "WAIT", -(d.prediction.expected_further_drop_pct or 0)))[: e.waiting_n]
-    alerts = [d for d in deals
-              if (d.total >= cfg.settings.scoring.classes.get("EXCELLENT", 90) or d.record_low or d.watch_hit)
-              and d.status in ("NEW", "PRICE DROP")][: e.alerts_n]
+    if alerts is None:
+        alerts = [d for d in deals
+                  if (d.total >= cfg.settings.scoring.classes.get("EXCELLENT", 90) or d.record_low or d.watch_hit)
+                  and d.status in ("NEW", "PRICE DROP")][: e.alerts_n]
     wl: list[tuple[WatchItem, DealView | None]] = []
     for w in cfg.watchlist.watchlist:
         matches = [d for d in deals if w.name in d.watch]
         wl.append((w, min(matches, key=lambda d: d.best.price_usd) if matches else None))
+    priorities = build_priorities(deals, cfg)
+    parcel = build_parcel_plan(top, priorities, cfg, fx) if fx is not None else None
     return ReportSections(top, opportunities, by_cat, waiting, alerts, wl,
-                          new_count=sum(1 for d in deals if d.status == "NEW"))
+                          new_count=sum(1 for d in deals if d.status == "NEW"),
+                          priorities=priorities, parcel=parcel)
+
+
+def build_priorities(deals: list[DealView], cfg: Config) -> list[PriorityTier]:
+    p = cfg.settings.priorities
+    fresh = [d for d in deals if not d.stale]
+    tiers: dict[int, PriorityTier] = {}
+    for w in sorted(cfg.watchlist.watchlist, key=lambda w: w.priority):
+        tier = tiers.setdefault(w.priority, PriorityTier(w.priority, p.labels.get(w.priority, f"Priority {w.priority}"), []))
+        matches = [d for d in fresh if w.name in d.watch][: p.per_item]   # deals are already sorted by score
+        tier.groups.append((w.name, matches))
+    cats = cfg.categories.categories
+    for t, cat_keys in sorted(p.categories.items()):
+        tier = tiers.setdefault(t, PriorityTier(t, p.labels.get(t, f"Priority {t}"), []))
+        best = [d for d in fresh if d.product.category in cat_keys][: p.per_category_tier]
+        tier.groups.append((" / ".join(cats[k].label for k in cat_keys if k in cats), best))
+    return [tiers[k] for k in sorted(tiers)]
+
+
+def select_alerts(deals: list[DealView], cfg: Config, repo: Repository) -> list[DealView]:
+    """Deals worth an immediate alert, never repeated unless the price fell further."""
+    a = cfg.settings.alerts
+    if not a.enabled:
+        return []
+    picked: list[DealView] = []
+    for d in deals:
+        if d.stale or d.best.listing.expired:
+            continue
+        reasons = []
+        if d.total >= a.min_score:
+            reasons.append(f"{d.label} deal ({d.total:.0f}/100)")
+        if a.watchlist_target_hit and d.watch_hit:
+            reasons.append("your target price reached")
+        if d.record_low and d.total >= a.record_low_min_score:
+            reasons.append("record low in our history")
+        if d.priority == 1 and d.watch and d.total >= a.priority1_min_score:
+            reasons.append("priority item: " + ", ".join(d.watch))
+        if not reasons:
+            continue
+        n = repo.notification(d.product.id)
+        if n is not None and n.alerted_price_usd is not None and \
+                d.best.price_usd > n.alerted_price_usd * (1 - a.realert_drop_pct / 100):
+            continue  # already alerted at this (or a lower) price
+        d.alert_reasons = reasons
+        picked.append(d)
+    picked.sort(key=lambda d: (d.priority or 9, -d.total))
+    return picked[: a.max_per_message]
+
+
+def build_parcel_plan(top: list[DealView], priorities: list[PriorityTier], cfg: Config,
+                      fx: FxTable) -> ParcelPlan | None:
+    """Customs helper for the €200 per-parcel duty-free limit."""
+    from app.shipping.calculator import customs_duty_eur
+
+    regime = cfg.shipping.customs.regime
+    limit = regime.duty_free_value_eur
+    chosen: list[DealView] = []
+    seen: set[str] = set()
+    for tier in priorities:
+        if tier.tier > 2:
+            continue
+        for _name, lst in tier.groups:
+            for d in lst[:2]:
+                if d.product.id not in seen:
+                    seen.add(d.product.id)
+                    chosen.append(d)
+    for d in top:
+        if d.product.id not in seen:
+            seen.add(d.product.id)
+            chosen.append(d)
+    rows: list[ParcelRow] = []
+    for d in chosen[:14]:
+        de = d.best.delivery
+        if de.customs_value_eur is None:
+            continue
+        l = d.best.listing
+        dom_eur = max(0.0, de.customs_value_eur - (fx.convert(d.best.price_usd, "USD", "EUR") or 0))
+        max_price = fx.convert(limit - dom_eur, "EUR", l.currency)
+        rows.append(ParcelRow(deal=d, value_eur=de.customs_value_eur, duty_eur=de.duty_eur or 0.0,
+                              duty_free=(de.duty_eur or 0) == 0, max_duty_free_price=max_price, currency=l.currency))
+    if not rows:
+        return None
+    tips: list[str] = []
+    by_region: dict[str, list[ParcelRow]] = {}
+    for r in rows:
+        if r.duty_free:
+            by_region.setdefault(r.deal.best.listing.region, []).append(r)
+    for region, rs in by_region.items():
+        if len(rs) < 2:
+            continue
+        a, b = rs[0], rs[1]
+        combined = a.value_eur + b.value_eur
+        if combined > limit:
+            weight = (a.deal.best.delivery.weight_kg or 0) + (b.deal.best.delivery.weight_kg or 0)
+            duty, _ = customs_duty_eur(combined, weight, cfg)
+            tips.append(f"{region}: “{a.deal.best.listing.title[:40]}” + “{b.deal.best.listing.title[:40]}” in ONE parcel "
+                        f"= €{combined:.0f} → duty ≈ €{duty:.0f}. Ask the forwarder to ship them as separate parcels "
+                        f"and both stay duty-free.")
+    tips.append(f"Duty-free limit: €{limit:g} and {regime.duty_free_weight_kg:g} kg per parcel; above it you pay "
+                f"{regime.rate_on_excess_pct:g}% of the excess. The value counted is the product price plus shipping "
+                f"to the forwarder. Confirm the per-parcel rule with your forwarder before ordering several items.")
+    return ParcelPlan(limit_eur=limit, rows=rows, tips=tips)
 
 
 def listing_extra(l: Listing) -> dict:

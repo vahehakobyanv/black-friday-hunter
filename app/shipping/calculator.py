@@ -160,12 +160,14 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
     if cfg.shipping.customs.include_international_shipping_in_value:
         value_usd += intl_usd or 0
     value_eur = fx.convert(value_usd, "USD", "EUR")
+    duty_eur_val: float | None = None
     if value_eur is None:
         complete = False
         customs_usd = None
         lines.append(CostLine(label="Armenian customs", amount_usd=None, kind=PriceKind.UNVERIFIED, note="no EUR rate"))
     else:
         duty_eur, cnote = customs_duty_eur(value_eur, weight, cfg)
+        duty_eur_val = duty_eur
         customs_usd = fx.convert(duty_eur, "EUR", "USD") or 0.0
         if weight_est and weight and weight > cfg.shipping.customs.regime.duty_free_weight_kg:
             cnote += " (weight estimated)"
@@ -181,4 +183,7 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
         weight_kg=weight,
         weight_is_estimate=weight_est,
         warnings=warnings,
+        customs_value_eur=round(value_eur, 2) if value_eur is not None else None,
+        duty_eur=round(duty_eur_val, 2) if duty_eur_val is not None else None,
+        duty_free_limit_eur=cfg.shipping.customs.regime.duty_free_value_eur,
     )
