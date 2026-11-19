@@ -46,11 +46,15 @@ already cover those shops:
 | mydealz.de (Pepper) | DE | price, shop, community temperature, **next-best price** at another shop, expiry, shipping | Amazon.de, MediaMarkt, Saturn, notebooksbilliger, Alternate, Cyberport, Lenovo/Samsung DE … |
 | hotukdeals (Pepper) | UK | same | Amazon.co.uk, Currys, Argos, John Lewis, Very, Scan … |
 | dealnews | US | editor-verified price, retailer, "was" price, staff picks | Amazon, Walmart, Best Buy, Newegg, B&H, Adorama, Dell, HP, Lenovo, Samsung, Apple, Nike, Adidas … |
+| dealnews store feeds | US | every deal editors found at Amazon, Walmart, Best Buy, Costco, Newegg, Woot, Lenovo, Dell, Samsung, Apple, Home Depot, eBay | those shops |
+| DealCatcher RSS | US | one product per item with price (mostly Amazon, also Walmart, Home Depot, Macy's) | Amazon … |
+| 9to5Toys RSS | US | editor-written deals; only single-product headlines with one clear price, "was" price from "($X off)" | Amazon, Best Buy … |
+| BlackFriday.com ad pages | US | Black Friday / Cyber Monday ad scans: products and advertised prices (schema.org list) + link to the full ad in the email | Walmart, Target, Best Buy, Amazon, Costco, Newegg, Dell, Sam's Club, Home Depot, Kohl's, Macy's, Lowe's |
 | Best Buy Products API | US | **confirmed** price, regular price, UPC, weight | Best Buy (free key) |
 | eBay Browse API | US | **confirmed** prices for your watchlist keywords | eBay (free key) |
 | Watchlist URLs | any | schema.org product data | only sites whose robots.txt allows it |
 
-Checked and **not used**: Slickdeals and Reddit (block bots → 403/429), Keepa (paid), Amazon
+Checked and **not used**: Slickdeals, Reddit, Ben's Bargains, TechBargains, DealSea (block bots → 403/429), Keepa (paid), Amazon
 Creators API (needs an affiliate account with sales), Walmart/AliExpress affiliate APIs (approval).
 
 ### Scoring (config/settings.yaml → `scoring`)
@@ -137,7 +141,7 @@ cp .env.example .env   # fill GMAIL_APP_PASSWORD
 
 | Task | Where |
 |---|---|
-| Add/remove watched products, target prices, product URLs | `config/watchlist.json` |
+| Add/remove watched products, target prices (`target_price_usd`, `min_price_usd` guard), product URLs | `config/watchlist.json` |
 | Forwarder rates (Onex/Globbing/…), insurance, domestic shipping | `config/shipping_rates.yaml` |
 | Customs regime | `config/shipping_rates.yaml → customs` |
 | Category keywords, estimated weights, BF heuristics | `config/categories.yaml` |

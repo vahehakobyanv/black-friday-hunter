@@ -103,6 +103,61 @@ sources:
       - {url: "https://www.dealnews.com/c201/Home-Garden/Kitchen/?rss=1", category: kitchen}
       - {url: "https://www.dealnews.com/c1009/Home-Garden/Appliances/Household-Items/Vacuum-Cleaners/Robot-Vacuums/?rss=1", category: appliances}
       - {url: "https://www.dealnews.com/c196/Home-Garden/?rss=1", category: home_furniture}
+      # Store feeds: every deal dealnews editors found at these US shops.
+      - {url: "https://www.dealnews.com/s313/Amazon/?rss=1"}
+      - {url: "https://www.dealnews.com/s321/Walmart/?rss=1"}
+      - {url: "https://www.dealnews.com/s560/Best-Buy/?rss=1"}
+      - {url: "https://www.dealnews.com/s897/Costco/?rss=1"}
+      - {url: "https://www.dealnews.com/s504/Newegg/?rss=1"}
+      - {url: "https://www.dealnews.com/s1692/Woot-An-Amazon-Company/?rss=1"}
+      - {url: "https://www.dealnews.com/s1662/Lenovo/?rss=1", category: laptops}
+      - {url: "https://www.dealnews.com/s604/Dell-Technologies/?rss=1", category: laptops}
+      - {url: "https://www.dealnews.com/s6058/Samsung/?rss=1"}
+      - {url: "https://www.dealnews.com/s415/Apple/?rss=1"}
+      - {url: "https://www.dealnews.com/s958/Home-Depot/?rss=1"}
+      - {url: "https://www.dealnews.com/s50/eBay/?rss=1"}
+  - id: dealcatcher
+    type: dealcatcher
+    enabled: true
+    region: US
+    currency: USD
+    # One product per item ("Amazon - Product $price"); mostly Amazon, also Walmart, Home Depot, Macy's.
+    feed_urls:
+      - "https://www.dealcatcher.com/rss"
+  - id: 9to5toys
+    type: editorial_rss
+    enabled: true
+    region: US
+    currency: USD
+    # Editor-written posts. Only single-product headlines with one clear price are used.
+    feeds:
+      - {url: "https://9to5toys.com/feed/"}
+      - {url: "https://9to5toys.com/guides/apple/feed/"}
+      - {url: "https://9to5toys.com/guides/games/feed/", category: gaming}
+  - id: bf_ads
+    type: bf_ads
+    enabled: true
+    region: US
+    currency: USD
+    # Black Friday / Cyber Monday ad pages (schema.org product list) at blackfriday.com.
+    # Robots.txt allows these pages; the email links to each store's full ad scan.
+    base_url: "https://blackfriday.com/ads"
+    ad_pages:
+      - {event: black-friday, slug: walmart, store: Walmart}
+      - {event: black-friday, slug: target, store: Target}
+      - {event: black-friday, slug: best-buy, store: Best Buy}
+      - {event: black-friday, slug: amazon, store: Amazon}
+      - {event: black-friday, slug: costco, store: Costco}
+      - {event: black-friday, slug: newegg, store: Newegg}
+      - {event: black-friday, slug: dell-consumer, store: Dell}
+      - {event: black-friday, slug: sams-club, store: Sam's Club}
+      - {event: black-friday, slug: home-depot, store: Home Depot}
+      - {event: black-friday, slug: kohls, store: Kohl's}
+      - {event: black-friday, slug: macys, store: Macy's}
+      - {event: black-friday, slug: lowes, store: Lowe's}
+      - {event: cyber-monday, slug: amazon, store: Amazon}
+      - {event: cyber-monday, slug: best-buy, store: Best Buy}
+      - {event: cyber-monday, slug: dell-consumer, store: Dell}
   - id: bestbuy
     type: bestbuy
     enabled: true            # runs only when env BESTBUY_API_KEY is set
@@ -155,6 +210,12 @@ retailers:
   "Costco": {reliability: 0.85, aliases: ["costco.com"]}
   "Woot": {reliability: 0.85, aliases: ["woot!", "woot! an amazon company", "woot.com"]}
   "Micro Center": {reliability: 0.9, aliases: ["microcenter"]}
+  "Home Depot": {reliability: 0.85, aliases: ["homedepot.com", "the home depot"]}
+  "Lowe's": {reliability: 0.85, aliases: ["lowes", "lowes.com"]}
+  "Sam's Club": {reliability: 0.8, aliases: ["sams club", "samsclub.com"]}   # membership needed
+  "Kohl's": {reliability: 0.8, aliases: ["kohls", "kohls.com"]}
+  "Macy's": {reliability: 0.8, aliases: ["macys", "macys.com"]}
+  "GameStop": {reliability: 0.85, aliases: ["gamestop.com"]}
   # Germany
   "MediaMarkt": {reliability: 0.9, aliases: ["media markt", "mediamarkt.de"]}
   "Saturn": {reliability: 0.9, aliases: ["saturn.de"]}

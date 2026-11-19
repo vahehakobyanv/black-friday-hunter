@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.collectors.base import Collector
 from app.collectors.bestbuy import BestBuyCollector
+from app.collectors.deal_sites import BlackFridayAdsCollector, DealCatcherCollector, EditorialRssCollector
 from app.collectors.dealnews import DealnewsCollector
 from app.collectors.ebay import EbayCollector
 from app.collectors.generic_store import GenericStoreCollector
@@ -14,6 +15,9 @@ TYPES: dict[str, type[Collector]] = {
     "bestbuy": BestBuyCollector,
     "ebay": EbayCollector,
     "generic_store": GenericStoreCollector,
+    "dealcatcher": DealCatcherCollector,
+    "editorial_rss": EditorialRssCollector,
+    "bf_ads": BlackFridayAdsCollector,
 }
 
 

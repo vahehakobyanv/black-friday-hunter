@@ -222,6 +222,8 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
                         for tier in sections.priorities:
                             for _n, lst in tier.groups:
                                 notified.update({d.product.id: d for d in lst})
+                        for g in sections.ads:
+                            notified.update({d.product.id: d for d, _o in g.items})
                         alert_ids = {d.product.id for d in alerts}
                         for pid, d in notified.items():
                             repo.mark_notified(pid, d.best.price_usd, now, alerted=pid in alert_ids)

@@ -181,9 +181,10 @@ def build_deals(repo: Repository, cfg: Config, fx: FxTable, now: datetime, run_s
         age_h = (now - bl.last_seen).total_seconds() / 3600
         watch = watch_matches(product.canonical_name + " " + bl.title, cfg)
         watch_hit = any(
+            (w.min_price_usd is None or best.price_usd >= w.min_price_usd) and (
             (w.target_price_usd is not None and best.price_usd <= w.target_price_usd)
             or (w.target_delivered_usd is not None and best.delivery.total_usd is not None
-                and best.delivery.total_usd <= w.target_delivered_usd)
+                and best.delivery.total_usd <= w.target_delivered_usd))
             for w in watch)
         d = DealView(
             product=product, best=best, others=others, stats=stats, prediction=prediction, score=sb,
@@ -235,6 +236,44 @@ class ReportSections:
     new_count: int
     priorities: list[PriorityTier] = field(default_factory=list)
     parcel: ParcelPlan | None = None
+    ads: list["AdGroup"] = field(default_factory=list)
+
+
+@dataclass
+class AdGroup:
+    """One store's Black Friday / Cyber Monday ad page and its best items."""
+    store: str
+    event: str            # black-friday / cyber-monday
+    url: str
+    items: list[tuple[DealView, OfferView]] = field(default_factory=list)
+
+    @property
+    def event_label(self) -> str:
+        return "Cyber Monday" if self.event == "cyber-monday" else "Black Friday"
+
+
+def build_ads(deals: list[DealView], cfg: Config, per_store: int = 3) -> list[AdGroup]:
+    groups: list[AdGroup] = []
+    index: dict[tuple[str, str], AdGroup] = {}
+    for src in cfg.stores.sources:
+        if src.type != "bf_ads" or not src.enabled or not src.base_url:
+            continue
+        for page in src.ad_pages:
+            url = f"{src.base_url.rstrip('/')}/{page.event}/{page.slug}"
+            g = AdGroup(store=page.store or page.slug, event=page.event, url=url)
+            groups.append(g)
+            index[(src.id, url)] = g
+    if not groups:
+        return []
+    ad_sources = {src_id for src_id, _ in index}
+    for d in deals:  # already sorted best first
+        for o in [d.best, *d.others]:
+            if o.listing.source not in ad_sources:
+                continue
+            g = index.get((o.listing.source, listing_extra(o.listing).get("ad_url", "")))
+            if g is not None and len(g.items) < per_store and all(x is not d for x, _ in g.items):
+                g.items.append((d, o))
+    return groups
 
 
 def build_sections(deals: list[DealView], cfg: Config, alerts: list[DealView] | None = None,
@@ -264,7 +303,7 @@ def build_sections(deals: list[DealView], cfg: Config, alerts: list[DealView] | 
     parcel = build_parcel_plan(top, priorities, cfg, fx) if fx is not None else None
     return ReportSections(top, opportunities, by_cat, waiting, alerts, wl,
                           new_count=sum(1 for d in deals if d.status == "NEW"),
-                          priorities=priorities, parcel=parcel)
+                          priorities=priorities, parcel=parcel, ads=build_ads(deals, cfg))
 
 
 def build_priorities(deals: list[DealView], cfg: Config) -> list[PriorityTier]:

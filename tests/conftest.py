@@ -53,6 +53,12 @@ def make_transport(fail_hosts: set[str] | None = None, blocked_hosts: set[str] |
             return httpx.Response(200, text=fixture_text("mydealz_hot.xml"), headers={"content-type": "text/xml"})
         if "hotukdeals.com/rss" in url:
             return httpx.Response(200, text=fixture_text("hotukdeals_hot.xml"), headers={"content-type": "text/xml"})
+        if "dealcatcher.com/rss" in url:
+            return httpx.Response(200, text=fixture_text("dealcatcher.xml"), headers={"content-type": "text/xml"})
+        if "9to5toys.com" in url:
+            return httpx.Response(200, text=fixture_text("9to5toys.xml"), headers={"content-type": "application/rss+xml"})
+        if "blackfriday.com/ads/" in url:
+            return httpx.Response(200, text=fixture_text("bf_ad_walmart.html"), headers={"content-type": "text/html"})
         if "/deals/" in url:
             return httpx.Response(200, text=fixture_text("pepper_deal_page.html"), headers={"content-type": "text/html"})
         if "dealnews.com" in url:

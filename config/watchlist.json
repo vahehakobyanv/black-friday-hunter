@@ -1,12 +1,14 @@
 {
-  "_help": "Your personal watchlist. Edit freely, no Python changes needed. priority: 1 = most important, 2 = next, 3 = nice to have (shown in that order in the email; priority-1 items also trigger instant alerts at a lower score). keywords: any of these phrases (case-insensitive, whole words) must appear in the title. exclude: skip titles containing any of these (accessories etc.). target_price_usd (optional): alert when the PRODUCT price in USD is at or below this. target_delivered_usd (optional): same, but for the price delivered to Yerevan. urls (optional): product pages to check directly (only if the site's robots.txt allows it).",
+  "_help": "Your personal watchlist. Edit freely, no Python changes needed. priority: 1 = most important, 2 = next, 3 = nice to have (shown in that order in the email; priority-1 items also trigger instant alerts at a lower score). keywords: any of these phrases (case-insensitive, whole words) must appear in the title. exclude: skip titles containing any of these (accessories etc.). target_price_usd (optional): alert when the PRODUCT price in USD is at or below this. target_delivered_usd (optional): same, but for the price delivered to Yerevan. min_price_usd (optional): matches cheaper than this never count as a target hit (protects against games/accessories). urls (optional): product pages to check directly (only if the site's robots.txt allows it).",
   "watchlist": [
     {
       "name": "PlayStation 5",
       "priority": 1,
       "keywords": ["PS5 Slim", "PlayStation 5 Slim", "PS5 Konsole", "PlayStation 5 Konsole", "PS5 Console", "PlayStation 5 Console", "PS5 Digital", "PlayStation 5 Digital", "PS5 Disc"],
       "exclude": ["pro", "controller", "dualsense", "hülle", "case", "cover", "skin", "stand", "ladestation", "charging", "headset", "portal", "faceplate", "cooling"],
-      "target_price_usd": null,
+      "target_price_usd": 500,
+      "min_price_usd": 300,
+      "_note": "Target range $450-500: alert at $500 or less",
       "urls": []
     },
     {
@@ -14,7 +16,17 @@
       "priority": 1,
       "keywords": ["PS5 Pro Konsole", "PS5 Pro Console", "PlayStation 5 Pro Konsole", "PlayStation 5 Pro Console", "PS5 Pro 2TB", "PlayStation 5 Pro 2TB", "PS5 Pro Bundle", "PlayStation 5 Pro Bundle", "PS5 Pro Digital", "PlayStation 5 Pro Digital"],
       "exclude": ["controller", "dualsense", "hülle", "case", "cover", "skin", "stand", "ladestation", "charging", "headset", "enhanced", "spiel", "game", "disc drive", "laufwerk"],
-      "target_price_usd": null,
+      "target_price_usd": 650,
+      "min_price_usd": 450,
+      "urls": []
+    },
+    {
+      "name": "Xbox Series X",
+      "priority": 1,
+      "keywords": ["Xbox Series X Console", "Xbox Series X Konsole", "Xbox Series X 1TB", "Xbox Series X 2TB", "Xbox Series X Digital", "Xbox Series X Galaxy", "Xbox Series X Bundle"],
+      "exclude": ["controller", "headset", "series s", "case", "hülle", "cover", "skin", "stand", "ladestation", "charging", "game", "spiel", "festplatte", "expansion card", "speicherkarte", "gift card", "game pass"],
+      "target_price_usd": 450,
+      "min_price_usd": 300,
       "urls": []
     },
     {
@@ -26,10 +38,19 @@
       "urls": []
     },
     {
-      "name": "MacBook",
+      "name": "MacBook Air",
       "priority": 1,
-      "keywords": ["MacBook Air", "MacBook Pro", "MacBook"],
+      "keywords": ["MacBook Air"],
       "exclude": ["case", "hülle", "sleeve", "cover", "skin", "folie", "protector", "charger", "ladegerät", "netzteil", "adapter", "hub", "dock", "stand", "ständer", "keyboard cover", "bag", "tasche"],
+      "target_price_usd": 850,
+      "min_price_usd": 500,
+      "urls": []
+    },
+    {
+      "name": "MacBook Pro",
+      "priority": 1,
+      "keywords": ["MacBook Pro", "MacBook"],
+      "exclude": ["case", "hülle", "sleeve", "cover", "skin", "folie", "protector", "charger", "ladegerät", "netzteil", "adapter", "hub", "dock", "stand", "ständer", "keyboard cover", "bag", "tasche", "air"],
       "target_price_usd": null,
       "urls": []
     },

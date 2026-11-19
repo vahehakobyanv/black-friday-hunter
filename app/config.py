@@ -128,6 +128,12 @@ class FeedCfg(BaseModel):
     category: str | None = None   # hint used when the title itself is not specific
 
 
+class AdPageCfg(BaseModel):
+    event: str = "black-friday"      # black-friday / cyber-monday (path on blackfriday.com)
+    slug: str                        # e.g. "walmart"
+    store: str | None = None         # retailer name for the offers
+
+
 class SourceCfg(BaseModel):
     id: str
     type: str
@@ -143,6 +149,8 @@ class SourceCfg(BaseModel):
     page_size: int = 50
     marketplace: str | None = None
     max_per_keyword: int = 10
+    base_url: str | None = None
+    ad_pages: list[AdPageCfg] = Field(default_factory=list)
 
 
 def source_feeds(src: "SourceCfg") -> list[FeedCfg]:
@@ -191,6 +199,8 @@ class WatchItem(BaseModel):
     exclude: list[str] = Field(default_factory=list)
     target_price_usd: float | None = None
     target_delivered_usd: float | None = None
+    # Ignore matches cheaper than this for target alerts (games/accessories that slip through keywords).
+    min_price_usd: float | None = None
     urls: list[str] = Field(default_factory=list)
 
     @field_validator("keywords")

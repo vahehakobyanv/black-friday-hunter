@@ -82,6 +82,10 @@ def test_email_is_sent_and_repeats_are_not_new(cfg, now, tmp_path, monkeypatch):
     cfg.secrets.gmail_app_password = "abcdefghijklmnop"
     cfg.settings.email.email_every_hours = 1
     cfg.settings.email.quiet_hours = []
+    # Keep the data set small enough that email 1 shows every deal (then nothing is new in email 2).
+    for src in cfg.stores.sources:
+        if src.id in ("dealcatcher", "9to5toys", "bf_ads"):
+            src.enabled = False
     t = make_transport()
     out1 = run_once(cfg, send=True, transport=t, now=now, report_dir=tmp_path, sleep=lambda s: None)
     assert out1.email_sent and len(FakeSMTP.sent) == 1

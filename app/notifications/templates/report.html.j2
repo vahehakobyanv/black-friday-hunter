@@ -207,6 +207,20 @@
   </table>
   {% endif %}
 
+  {% if sections.ads and not alert_only %}
+  {{ section("🗞 BLACK FRIDAY & CYBER MONDAY ADS", "US store ad scans (blackfriday.com). Ad prices are ADVERTISED — some start only on the sale day. Open “full ad” to see every page.") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
+    {% for g in sections.ads %}
+    <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};line-height:1.5;">
+      <b>{{ g.store }}</b> <span style="color:{{ C_MUTED }};">{{ g.event_label }}</span> · <a href="{{ g.url }}">full ad →</a>
+      {% for d, o in g.items %}
+      <br>• <a href="{{ o.listing.url }}" style="color:{{ C_TEXT }};">{{ o.listing.title | truncate(70) }}</a> — <b>{{ money(o.listing.last_price, o.listing.currency) }}</b>{% if o.delivery.total_usd is not none %} <span style="color:{{ C_MUTED }};">({{ "≈" if o.delivery.complete else "≥" }}{{ money(o.delivery.total_usd, "USD") }} in Yerevan)</span>{% endif %} <span style="color:{{ C_MUTED }};">{{ "%.0f" % d.total }}/100</span>
+      {% endfor %}
+    </td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
   {{ section("📂 CATEGORY SUMMARY", "Best deals in every category. ★ = your focus categories (more deals shown; edit email.focus_categories in config/settings.yaml).") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
     {% for key, label in category_labels.items() %}
