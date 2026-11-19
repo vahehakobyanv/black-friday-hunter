@@ -109,6 +109,18 @@ Actions tab → **Hourly deals** → **Run workflow**. Then check:
 - the email arrived (check Spam the first time and mark "Not spam");
 - the next scheduled run (minute :17) logs `state: restored database`.
 
+### 4. Reliable hourly trigger (recommended)
+GitHub's cron often starts late or skips runs. A free Google Apps Script can start the
+workflow every hour instead — see [scripts/google_apps_script_trigger.js](scripts/google_apps_script_trigger.js)
+for the 5-step setup (needs a fine-grained GitHub token with *Actions: read & write* on this repo only).
+
+### 5. Telegram (optional)
+1. In Telegram open **@BotFather** → `/newbot` → copy the token.
+2. Open your new bot and press **Start** (send it any message).
+3. Add repository secret `TELEGRAM_BOT_TOKEN`, then find your chat id:
+   `TELEGRAM_BOT_TOKEN=... python -m app.main telegram-setup`
+4. Add repository secret `TELEGRAM_CHAT_ID`.
+
 ### Local run
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
