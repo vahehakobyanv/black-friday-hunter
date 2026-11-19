@@ -79,6 +79,18 @@ def cmd_telegram_setup(_args) -> int:
     return 0
 
 
+def cmd_telegram_test(_args) -> int:
+    """Send a test message using TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID (prints no ids)."""
+    from app.notifications.telegram import send_telegram
+
+    cfg = load_config()
+    send_telegram(cfg.secrets.telegram_bot_token, cfg.secrets.telegram_chat_id,
+                  "✅ <b>Black Friday Hunter</b> is connected.\nInstant deal alerts and a short summary of each "
+                  "email report will arrive here (no messages 00:00–08:00 Yerevan).")
+    print("telegram test message sent")
+    return 0
+
+
 def cmd_stats(_args) -> int:
     from sqlalchemy import func, select
 
@@ -108,10 +120,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("test-email")
     sub.add_parser("stats")
     sub.add_parser("telegram-setup")
+    sub.add_parser("telegram-test")
     args = parser.parse_args(argv)
     setup_logging(args.log_level, json_format=not args.plain_logs)
     handlers = {"run": cmd_run, "test-email": cmd_test_email, "stats": cmd_stats,
-                "telegram-setup": cmd_telegram_setup, None: cmd_run}
+                "telegram-setup": cmd_telegram_setup, "telegram-test": cmd_telegram_test, None: cmd_run}
     if args.cmd is None:
         args.no_email = False
     return handlers[args.cmd](args)

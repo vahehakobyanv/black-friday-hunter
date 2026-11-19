@@ -13,6 +13,10 @@ on:
         description: "Send the email report"
         type: boolean
         default: true
+      telegram_test:
+        description: "Send a Telegram test message first"
+        type: boolean
+        default: false
 
 permissions:
   contents: write   # push the database to the 'data' branch
@@ -37,6 +41,13 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Telegram test message
+        if: github.event_name == 'workflow_dispatch' && inputs.telegram_test
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m app.main telegram-test
 
       - name: Restore database
         run: bash scripts/state.sh restore
