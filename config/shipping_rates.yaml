@@ -57,14 +57,14 @@ forwarders:
     volumetric_divisor: null
     insurance_pct: null
     handling_fee: 0
-    # Onex US warehouse advertises purchases without US sales tax.
+    # Warehouse address in Delaware: no US sales tax (confirmed by user 2026-11-19).
     origin_sales_tax_pct: 0
-    verified: false
-    source: "https://onex.am/en/pages/2 (air 6000 AMD/kg seen 2026-11-19; site pages are inconsistent — please verify)"
+    verified: true
+    source: "6000 AMD/kg confirmed by user 2026-11-19 (also listed on https://onex.am/en/pages/2)"
   - id: onex_de
     name: "Onex (Germany warehouse)"
     origin: DE
-    rate_per_kg: null
+    rate_per_kg: 6000
     rate_currency: AMD
     min_chargeable_kg: null
     rounding_kg: 0.1
@@ -72,12 +72,12 @@ forwarders:
     insurance_pct: null
     handling_fee: 0
     origin_sales_tax_pct: 0      # German prices already include 19 % VAT
-    verified: false
-    source: "UNKNOWN — please fill in from your Onex account"
+    verified: true
+    source: "6000 AMD/kg, same as USA — confirmed by user 2026-11-19"
   - id: onex_uk
     name: "Onex (UK warehouse)"
     origin: UK
-    rate_per_kg: null
+    rate_per_kg: 6000
     rate_currency: AMD
     min_chargeable_kg: null
     rounding_kg: 0.1
@@ -85,8 +85,8 @@ forwarders:
     insurance_pct: null
     handling_fee: 0
     origin_sales_tax_pct: 0      # UK prices already include 20 % VAT
-    verified: false
-    source: "UNKNOWN — please fill in from your forwarder account"
+    verified: true
+    source: "6000 AMD/kg, same as USA — confirmed by user 2026-11-19"
 
 # Domestic delivery from the shop to the forwarder's warehouse, per origin.
 # Used only when the deal does not say "free shipping/delivery". null = unknown.

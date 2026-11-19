@@ -1,10 +1,10 @@
 # Black Friday Deal Hunter 2026
 
-An hourly deal-intelligence service for a shopper in **Yerevan, Armenia**. It collects
+An deal-intelligence service for a shopper in **Yerevan, Armenia**. It collects
 real offers from permitted deal feeds and official APIs, matches the same product across
 shops, records its own price history, predicts Black Friday / Cyber Monday prices,
 estimates the **delivered-to-Yerevan** cost, scores every deal from 0 to 100, and emails an
-HTML report every hour.
+HTML report every 4 hours (no emails 00:00–08:00 Yerevan time; prices are still collected hourly).
 
 - **Black Friday 2026:** 27 November · **Cyber Monday:** 30 November. After that it keeps tracking ongoing discounts.
 - **Cost:** €0. GitHub Actions (public repo) + Gmail. No VPS, no paid database, no paid AI.
@@ -148,5 +148,5 @@ gunzip -k backup.db.gz && mkdir -p data && mv backup.db data/deals.db && bash sc
 - No historical prices exist before the first run; 30/90/180-day averages appear after 7/30/90 days.
 - Pepper links open the deal page (the click-out redirect is disallowed by robots.txt).
 - Weights are category estimates unless the source provides them (Best Buy does).
-- Forwarder rates for Germany/UK must be filled in by you; until then those delivered prices are marked incomplete.
+- Forwarder rates (Onex, 6000 AMD/kg for US/DE/UK) are set in config — update them if Onex changes prices.
 - Predictions before you have a year of data are heuristic and labelled low confidence.

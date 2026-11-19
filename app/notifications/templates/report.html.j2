@@ -140,11 +140,11 @@
     <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:14px;">No qualifying deals in the last {{ ttl_hours }} hours.</div>
   {% endif %}
 
-  {{ section("⚡ BEST OPPORTUNITIES OF THE HOUR", "Strongest offers that are new (or dropped in price) in this run.") }}
+  {{ section("⚡ BEST NEW OPPORTUNITIES", "Strongest offers that are new (or dropped in price) since the last email.") }}
   {% if sections.opportunities %}
     {% for d in sections.opportunities %}{{ deal_card(d, compact=True) }}{% endfor %}
   {% else %}
-    <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No new qualifying offers this hour — the lists above and below are the latest available.</div>
+    <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No new qualifying offers since the last email — the lists above and below are the latest available.</div>
   {% endif %}
 
   {% if watchlist %}

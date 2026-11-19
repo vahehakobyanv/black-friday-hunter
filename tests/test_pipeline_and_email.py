@@ -23,7 +23,7 @@ def test_full_run_without_email(cfg, now, tmp_path):
     assert out.offers > 10 and out.deals > 5
     assert out.report_path and out.report_path.exists()
     html = out.report_path.read_text()
-    for section in ("TOP", "BEST OPPORTUNITIES", "CATEGORY SUMMARY", "PRICE PREDICTIONS", "SOURCES"):
+    for section in ("TOP", "BEST NEW OPPORTUNITIES", "CATEGORY SUMMARY", "PRICE PREDICTIONS", "SOURCES"):
         assert section in html
     assert "Delivered to Yerevan" in html and "Predicted Black Friday" in html
     assert out.subject.startswith("Black Friday Hunter | Top ")
@@ -80,6 +80,8 @@ def test_email_is_sent_and_repeats_are_not_new(cfg, now, tmp_path, monkeypatch):
                         lambda *a, **k: real_send(*a, **k, smtp_factory=FakeSMTP))
     cfg.secrets.gmail_address = "vahehakobyanv@gmail.com"
     cfg.secrets.gmail_app_password = "abcdefghijklmnop"
+    cfg.settings.email.email_every_hours = 1
+    cfg.settings.email.quiet_hours = []
     t = make_transport()
     out1 = run_once(cfg, send=True, transport=t, now=now, report_dir=tmp_path, sleep=lambda s: None)
     assert out1.email_sent and len(FakeSMTP.sent) == 1
@@ -99,6 +101,7 @@ def test_email_is_sent_and_repeats_are_not_new(cfg, now, tmp_path, monkeypatch):
 
 
 def test_missing_gmail_secret_fails_cleanly_but_saves_data(cfg, now, tmp_path):
+    cfg.settings.email.quiet_hours = []
     out = run_once(cfg, send=True, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
     assert not out.email_sent
     assert any("GMAIL_APP_PASSWORD" in e for e in out.errors)
@@ -120,3 +123,42 @@ def test_same_deal_from_two_feeds_is_one_offer(cfg, now, tmp_path):
         for deal in deals:
             urls = [deal.best.listing.url] + [o.listing.url for o in deal.others]
             assert len(urls) == len(set(urls)), deal.best.listing.title
+
+
+def _utc_from_yerevan(h, m=20, day=19):
+    from datetime import datetime
+    return datetime(2026, 11, day, h, m) - timedelta(hours=4)   # Yerevan = UTC+4
+
+
+def test_email_schedule_every_4_hours_with_night_off(cfg):
+    from app.pipeline import should_send_email
+    cfg.settings.email.email_every_hours = 4
+    cfg.settings.email.quiet_hours = [0, 8]
+    y = _utc_from_yerevan
+    # simulate one day of hourly runs (Yerevan 00:20 .. 23:20), starting after an email at 20:20 the day before
+    last = y(20, day=18)
+    sent_at = []
+    for hour in range(24):
+        now = y(hour)
+        ok, _ = should_send_email(cfg, now, last)
+        if ok:
+            sent_at.append(hour)
+            last = now
+    assert sent_at == [8, 12, 16, 20]
+
+
+def test_email_schedule_tolerates_late_github_start(cfg):
+    from app.pipeline import should_send_email
+    cfg.settings.email.email_every_hours = 4
+    cfg.settings.email.quiet_hours = [0, 8]
+    y = _utc_from_yerevan
+    assert should_send_email(cfg, y(12, 5), y(8, 22))[0]       # 3h43m later: still sends
+    assert not should_send_email(cfg, y(11, 20), y(8, 22))[0]
+    assert not should_send_email(cfg, y(3, 20), y(20, 22, day=18))[0]   # night
+
+
+def test_skipped_email_still_collects_and_saves(cfg, now, tmp_path):
+    cfg.settings.email.quiet_hours = [0, 24]     # always quiet
+    out = run_once(cfg, send=True, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
+    assert not out.email_sent and out.email_skipped == "quiet hours" and not out.errors
+    assert _count(cfg, Product) > 0

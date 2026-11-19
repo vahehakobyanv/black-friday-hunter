@@ -12,7 +12,7 @@ import json
 import logging
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -44,6 +44,7 @@ class RunOutcome:
     report_path: Path | None
     subject: str | None
     errors: list[str] = field(default_factory=list)
+    email_skipped: str | None = None
 
 
 def utcnow() -> datetime:
@@ -59,6 +60,38 @@ def in_quiet_hours(cfg: Config, now: datetime) -> bool:
     return start <= hour < end if start < end else (hour >= start or hour < end)
 
 
+EMAIL_SLACK = timedelta(minutes=20)  # tolerate GitHub start-time jitter
+
+
+def should_send_email(cfg: Config, now: datetime, last_email: datetime | None) -> tuple[bool, str]:
+    """Decide whether this run sends the report.
+
+    Not during quiet hours; otherwise when at least `email_every_hours` passed
+    since the last sent email (minus a little slack for late GitHub starts).
+    The first run after quiet hours always sends, so mornings start on time."""
+    if in_quiet_hours(cfg, now):
+        return False, "quiet hours"
+    every = cfg.settings.email.email_every_hours
+    if last_email is None or every <= 1:
+        return True, "due"
+    if in_quiet_hours(cfg, last_email):  # can't happen normally, but be safe
+        return True, "due"
+    tz = ZoneInfo(cfg.settings.app.timezone)
+    q = cfg.settings.email.quiet_hours
+    if len(q) == 2:
+        # a quiet period started after the last email -> first run after it sends
+        local_last = last_email.replace(tzinfo=timezone.utc).astimezone(tz)
+        local_now = now.replace(tzinfo=timezone.utc).astimezone(tz)
+        quiet_start = local_now.replace(hour=q[0], minute=0, second=0, microsecond=0)
+        if quiet_start > local_now:
+            quiet_start -= timedelta(days=1)
+        if local_last < quiet_start:
+            return True, "first email after quiet hours"
+    if now - last_email >= timedelta(hours=every) - EMAIL_SLACK:
+        return True, "due"
+    return False, f"next email due {every:g} h after the last one"
+
+
 def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport | None = None,
              now: datetime | None = None, report_dir: Path | None = None, sleep=None) -> RunOutcome:
     now = now or utcnow()
@@ -70,6 +103,7 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
     statuses: list[CollectorStatus] = []
     offers_total = 0
     email_sent = False
+    skipped_reason: str | None = None
     subject = None
 
     http_kw = {}
@@ -156,8 +190,11 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
 
         # ---------------------------------------------------------------- email
         if report is not None and send:
-            if in_quiet_hours(cfg, now):
-                log.info("quiet hours — email skipped")
+            last = repo.last_email_run()
+            send_now, why = should_send_email(cfg, now, last.started_at if last else None)
+            if not send_now:
+                log.info("email skipped: %s", why)
+                skipped_reason = why
             else:
                 s = cfg.secrets
                 recipients = s.email_to or cfg.settings.email.recipients
@@ -194,4 +231,5 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
             log.error("could not finalise run: %s", traceback.format_exc())
     engine.dispose()
     return RunOutcome(run_id=run_id, statuses=statuses, offers=offers_total, deals=len(deals), email_sent=email_sent,
-                      report_path=report_path if report_path.exists() else None, subject=subject, errors=errors)
+                      report_path=report_path if report_path.exists() else None, subject=subject, errors=errors,
+                      email_skipped=skipped_reason)

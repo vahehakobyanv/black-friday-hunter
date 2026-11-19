@@ -17,9 +17,12 @@ email:
   per_category_n: 2
   waiting_n: 8
   alerts_n: 8
-  # Quiet hours in local time, e.g. [1, 8] = no email from 01:00 to 07:59.
-  # Empty list = send every hour (default, as requested).
-  quiet_hours: []
+  # Prices are collected every hour (for accurate history), but the email is
+  # sent at most every `email_every_hours` hours. 1 = every hourly run.
+  email_every_hours: 4
+  # Quiet hours in local (Yerevan) time: [0, 8] = no email from 00:00 to 07:59.
+  # The first run after the quiet period always sends. [] = no quiet hours.
+  quiet_hours: [0, 8]
   # Categories you care most about: shown first in the category summary,
   # with more deals each (focus_per_category instead of per_category_n).
   focus_categories: ["gaming", "tv_electronics", "kitchen", "appliances", "home_furniture", "smart_home"]

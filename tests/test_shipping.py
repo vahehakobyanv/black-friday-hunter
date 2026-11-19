@@ -41,6 +41,7 @@ def test_us_delivery_complete_with_free_shipping(cfg, fx):
 
 
 def test_unknown_rate_is_marked_incomplete_not_guessed(cfg, fx):
+    next(f for f in cfg.shipping.forwarders if f.origin == "DE").rate_per_kg = None
     est = estimate_delivery(ShipInput(price=100, currency="EUR", region="DE", retailer="MediaMarkt",
                                       category="laptops", free_shipping=True), fx, cfg)
     assert not est.complete
@@ -64,3 +65,12 @@ def test_expensive_item_pays_customs(cfg, fx):
     expected_usd = (value_eur - 200) * 0.15 * 395.37 / 360.41
     assert customs.amount_usd == pytest.approx(expected_usd, abs=0.02)
     assert not est.weight_is_estimate
+
+
+def test_germany_and_uk_use_configured_rate(cfg, fx):
+    for region, cur in (("DE", "EUR"), ("UK", "GBP")):
+        est = estimate_delivery(ShipInput(price=100, currency=cur, region=region, retailer="Amazon",
+                                          category="laptops", free_shipping=True), fx, cfg)
+        assert est.complete
+        fwd = next(l for l in est.lines if l.label == "Forwarding to Yerevan")
+        assert fwd.amount_usd == pytest.approx(3.5 * 6000 / 360.41, abs=0.01)

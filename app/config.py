@@ -37,6 +37,8 @@ class EmailCfg(BaseModel):
     waiting_n: int = 8
     alerts_n: int = 8
     quiet_hours: list[int] = Field(default_factory=list)
+    # Send an email at most every N hours (data is still collected every run).
+    email_every_hours: float = 1
     focus_categories: list[str] = Field(default_factory=list)
     focus_per_category: int = 5
 
