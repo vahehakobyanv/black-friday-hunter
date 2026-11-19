@@ -18,6 +18,7 @@ from email.utils import parsedate_to_datetime
 
 from app.analysis.categorize import NON_PRODUCT, categorize
 from app.collectors.base import CollectContext, Collector, build_offer, normalize_retailer
+from app.config import source_feeds
 from app.models.schemas import PriceKind, RawOffer, ReferenceKind
 from app.utils.http import BlockedError
 from app.utils.text import parse_price, strip_html
@@ -103,9 +104,29 @@ class PepperCollector(Collector):
 
     def collect(self, ctx: CollectContext) -> tuple[list[RawOffer], int]:
         cfg = ctx.cfg
-        resp = ctx.http.get(self.source.feed_url)
-        resp.raise_for_status()
-        items = parse_feed(resp.text)
+        items: list[dict] = []
+        seen: set[str] = set()
+        errors: list[str] = []
+        feeds = source_feeds(self.source)
+        for feed in feeds:
+            try:
+                resp = ctx.http.get(feed.url)
+                resp.raise_for_status()
+                feed_items = parse_feed(resp.text)
+            except BlockedError:
+                raise
+            except Exception as exc:  # one broken feed must not lose the others
+                errors.append(f"{feed.url}: {exc}")
+                log.warning("pepper feed failed %s: %s", feed.url, exc)
+                continue
+            for item in feed_items:
+                if item["thread_id"] in seen:
+                    continue
+                seen.add(item["thread_id"])
+                item["hint"] = feed.category
+                items.append(item)
+        if errors and not items:
+            raise RuntimeError("; ".join(errors)[:300])
         offers: list[RawOffer] = []
         skipped = 0
         candidates: list[tuple[dict, str]] = []
@@ -114,7 +135,7 @@ class PepperCollector(Collector):
             if price is None:
                 skipped += 1  # no price -> voucher/cashback/contract
                 continue
-            cat = categorize(item["title"], item["category"], cfg.categories)
+            cat = categorize(item["title"], item["category"], cfg.categories, item["hint"])
             if cat == NON_PRODUCT:
                 skipped += 1
                 continue
@@ -122,7 +143,7 @@ class PepperCollector(Collector):
             candidates.append((item, cat))
 
         # Enrich the most relevant items (product categories first, hottest first).
-        budget = cfg.settings.collection.pepper_enrich_per_site
+        budget = self.source.enrich_budget if self.source.enrich_budget is not None else cfg.settings.collection.pepper_enrich_per_site
         refresh = timedelta(hours=cfg.settings.collection.pepper_enrich_refresh_hours)
         ranked = sorted(candidates, key=lambda c: (c[1] in cfg.settings.filters.exclude_categories,
                                                    -(c[0]["temperature"] or 0)))
@@ -172,6 +193,7 @@ class PepperCollector(Collector):
                 price_kind=PriceKind.ADVERTISED,
                 image_url=_bigger_image(item["image"]),
                 feed_category=item["category"],
+                category_hint=item["hint"],
                 availability="expired" if d.get("is_expired") else "unknown",
                 shipping_cost=float(d["shipping_price"]) if d.get("shipping_price") not in (None, "") else None,
                 free_shipping=d.get("shipping_free"),

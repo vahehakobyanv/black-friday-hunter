@@ -155,3 +155,25 @@ def test_classify(cfg, score, label):
 ])
 def test_categorize(cfg, title, feed, expected):
     assert categorize(title, feed, cfg.categories) == expected
+
+
+@pytest.mark.parametrize("title,hint,expected", [
+    ("Ninja AF180EU Heißluftfritteuse", None, "kitchen"),
+    ("De'Longhi Magnifica S Kaffeevollautomat", None, "kitchen"),
+    ("WMF Topfset 5-teilig", None, "kitchen"),
+    ("Xbox Series X 1TB Konsole", None, "gaming"),
+    ("Nintendo Switch 2 + Mario Kart World Bundle", None, "gaming"),
+    ("Samsung 65\" Neo QLED QN90F TV", None, "tv_electronics"),
+    ("Bosch Serie 6 Waschmaschine 9 kg", None, "appliances"),
+    ("Roborock Q7 Saugroboter", None, "appliances"),
+    ("Vileda Bodenwischer Komplettset", "kitchen", "kitchen"),              # hint decides
+    ("Vileda Bodenwischer Komplettset", None, "other"),
+])
+def test_categorize_new_categories_and_hint(cfg, title, hint, expected):
+    assert categorize(title, None, cfg.categories, hint) == expected
+
+
+def test_focus_categories_get_more_room(cfg):
+    from app.notifications.report import _ordered_category_labels
+    labels = list(_ordered_category_labels(cfg).items())
+    assert labels[0][0] == cfg.settings.email.focus_categories[0] and labels[0][1].startswith("★")

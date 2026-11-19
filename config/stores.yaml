@@ -35,6 +35,47 @@ sources:
     currency: GBP
     feed_url: "https://www.hotukdeals.com/rss/new"
     site: "https://www.hotukdeals.com"
+  # Topic feeds: more consoles, games, TVs, electronics, smart home, home and
+  # kitchen deals. `category` is a hint used when the title alone is not specific.
+  - id: mydealz_topics
+    type: pepper
+    enabled: true
+    region: DE
+    currency: EUR
+    site: "https://www.mydealz.de"
+    enrich_budget: 25
+    feeds:
+      - {url: "https://www.mydealz.de/rss/gruppe/playstation", category: gaming}
+      - {url: "https://www.mydealz.de/rss/gruppe/xbox", category: gaming}
+      - {url: "https://www.mydealz.de/rss/gruppe/nintendo", category: gaming}
+      - {url: "https://www.mydealz.de/rss/gruppe/gaming", category: gaming}
+      - {url: "https://www.mydealz.de/rss/gruppe/fernseher", category: tv_electronics}
+      - {url: "https://www.mydealz.de/rss/gruppe/elektronik", category: tv_electronics}
+      - {url: "https://www.mydealz.de/rss/gruppe/smart-home", category: smart_home}
+      - {url: "https://www.mydealz.de/rss/gruppe/haushaltsgeraete", category: appliances}
+      - {url: "https://www.mydealz.de/rss/gruppe/kueche", category: kitchen}
+      - {url: "https://www.mydealz.de/rss/gruppe/kuechengeraete", category: kitchen}
+      - {url: "https://www.mydealz.de/rss/gruppe/kaffeevollautomaten", category: kitchen}
+      - {url: "https://www.mydealz.de/rss/gruppe/home-living", category: home_furniture}
+  - id: hotukdeals_topics
+    type: pepper
+    enabled: true
+    region: UK
+    currency: GBP
+    site: "https://www.hotukdeals.com"
+    enrich_budget: 25
+    feeds:
+      - {url: "https://www.hotukdeals.com/rss/tag/playstation", category: gaming}
+      - {url: "https://www.hotukdeals.com/rss/tag/xbox", category: gaming}
+      - {url: "https://www.hotukdeals.com/rss/tag/nintendo", category: gaming}
+      - {url: "https://www.hotukdeals.com/rss/tag/gaming", category: gaming}
+      - {url: "https://www.hotukdeals.com/rss/tag/tv", category: tv_electronics}
+      - {url: "https://www.hotukdeals.com/rss/tag/electronics", category: tv_electronics}
+      - {url: "https://www.hotukdeals.com/rss/tag/smart-home", category: smart_home}
+      - {url: "https://www.hotukdeals.com/rss/tag/appliances", category: appliances}
+      - {url: "https://www.hotukdeals.com/rss/tag/kitchen", category: kitchen}
+      - {url: "https://www.hotukdeals.com/rss/tag/kitchen-appliances", category: kitchen}
+      - {url: "https://www.hotukdeals.com/rss/tag/home", category: home_furniture}
   - id: dealnews
     type: dealnews
     enabled: true
@@ -53,6 +94,15 @@ sources:
       - "https://www.dealnews.com/c202/Clothing-Accessories/?rss=1"
       - "https://www.dealnews.com/c280/Clothing-Accessories/Shoes/?rss=1"
       - "https://www.dealnews.com/c287/Clothing-Accessories/Luggage-Travel-Gear/?rss=1"
+    feeds:
+      - {url: "https://www.dealnews.com/c191/Gaming-Toys/Video-Games/f1915/Play-Station-5/?rss=1", category: gaming}
+      - {url: "https://www.dealnews.com/c191/Gaming-Toys/Video-Games/f1918/Xbox-Series-S-X/?rss=1", category: gaming}
+      - {url: "https://www.dealnews.com/c191/Gaming-Toys/Video-Games/f1652/Nintendo-Switch/?rss=1", category: gaming}
+      - {url: "https://www.dealnews.com/c148/Electronics/Audio-Components/Home-Theater-Systems/?rss=1", category: tv_electronics}
+      - {url: "https://www.dealnews.com/c155/Electronics/Audio-Components/Headphones/?rss=1", category: tv_electronics}
+      - {url: "https://www.dealnews.com/c201/Home-Garden/Kitchen/?rss=1", category: kitchen}
+      - {url: "https://www.dealnews.com/c1009/Home-Garden/Appliances/Household-Items/Vacuum-Cleaners/Robot-Vacuums/?rss=1", category: appliances}
+      - {url: "https://www.dealnews.com/c196/Home-Garden/?rss=1", category: home_furniture}
   - id: bestbuy
     type: bestbuy
     enabled: true            # runs only when env BESTBUY_API_KEY is set

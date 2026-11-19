@@ -49,7 +49,7 @@ def test_failed_source_does_not_stop_report(cfg, now, tmp_path):
     out = run_once(cfg, send=False, transport=make_transport(fail_hosts={"www.mydealz.de"}), now=now,
                    report_dir=tmp_path, sleep=lambda s: None)
     failed = [s for s in out.statuses if not s.ok]
-    assert {s.source for s in failed} == {"mydealz_hot", "mydealz_new"}
+    assert {s.source for s in failed} == {"mydealz_hot", "mydealz_new", "mydealz_topics"}
     assert out.deals > 0
     assert "Sources failed this run" in out.report_path.read_text()
 

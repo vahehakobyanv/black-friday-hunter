@@ -20,6 +20,10 @@ email:
   # Quiet hours in local time, e.g. [1, 8] = no email from 01:00 to 07:59.
   # Empty list = send every hour (default, as requested).
   quiet_hours: []
+  # Categories you care most about: shown first in the category summary,
+  # with more deals each (focus_per_category instead of per_category_n).
+  focus_categories: ["gaming", "tv_electronics", "kitchen", "appliances", "home_furniture", "smart_home"]
+  focus_per_category: 5
 
 collection:
   user_agent: "BFDealHunter/1.0 (personal price monitor; +https://github.com/vahehakobyanv/black-friday-hunter)"

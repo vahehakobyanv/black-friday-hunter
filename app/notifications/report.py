@@ -118,7 +118,7 @@ def render_report(*, sections: ReportSections, deals: list[DealView], statuses: 
         banners=build_banners(cfg, fx, statuses, deals),
         sections=sections,
         watchlist=sections.watchlist,
-        category_labels={k: c.label for k, c in cats.items()},
+        category_labels=_ordered_category_labels(cfg),
         statuses=statuses,
         ttl_hours=cfg.settings.filters.offer_ttl_hours,
         customs_label=(f"duty-free up to €{regime.duty_free_value_eur:g} / {regime.duty_free_weight_kg:g} kg, "
@@ -127,6 +127,15 @@ def render_report(*, sections: ReportSections, deals: list[DealView], statuses: 
         last_email=local_time(last_email) if last_email else None,
     )
     return RenderedReport(subject=subject, html=html, text=render_text(sections, subject))
+
+
+def _ordered_category_labels(cfg: Config) -> dict[str, str]:
+    """Focus categories first (marked ★), then the rest in config order."""
+    cats = cfg.categories.categories
+    focus = [k for k in cfg.settings.email.focus_categories if k in cats]
+    out = {k: "★ " + cats[k].label for k in focus}
+    out.update({k: c.label for k, c in cats.items() if k not in out})
+    return out
 
 
 def render_text(sections: ReportSections, subject: str) -> str:

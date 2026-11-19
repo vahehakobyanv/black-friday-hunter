@@ -46,17 +46,21 @@ categories:
     cm_extra_drop_pct: 2
   gaming:
     label: "Gaming consoles & accessories"
-    keywords: ["playstation", "ps5", "ps4", "xbox", "nintendo", "switch 2", "steam deck",
-               "dualsense", "controller", "gaming headset", "rog ally", "legion go"]
-    feed_categories: ["Gaming", "Video Games", "Consoles", "Games"]
+    keywords: ["playstation", "ps5", "ps4", "ps vr2", "playstation portal", "xbox", "game pass",
+               "nintendo", "switch 2", "switch oled", "joy-con", "amiibo", "steam deck", "meta quest",
+               "dualsense", "dualshock", "controller", "gamepad", "gaming headset", "rog ally", "legion go",
+               "konsole", "console", "videospiel", "video game", "pc game"]
+    feed_categories: ["Gaming", "Video Games", "Consoles", "Games", "PC Games", "Computer Games"]
     est_weight_kg: 1.5
     bf_extra_drop_pct: 5
     cm_extra_drop_pct: 2
   tv_electronics:
     label: "TVs & electronics"
-    keywords: ["oled", "qled", "fernseher", "smart tv", " tv ", "soundbar", "headphones",
-               "kopfhörer", "speaker", "lautsprecher", "camera", "kamera", "projector", "beamer",
-               "kindle", "e-reader", "bose", "sony wh", "sonos"]
+    keywords: ["oled", "qled", "mini-led", "neo qled", "fernseher", "smart tv", "tv", "4k tv", "uhd tv",
+               "soundbar", "home theater", "heimkino", "av receiver", "headphones", "kopfhörer",
+               "earphones", "speaker", "lautsprecher", "camera", "kamera", "projector", "beamer",
+               "kindle", "e-reader", "bose", "sony wh", "sonos", "fire tv", "chromecast", "apple tv",
+               "streaming stick", "blu-ray player", "drone", "gopro", "dji"]
     feed_categories: ["Electronics", "TVs", "Audio", "TV & Video", "Elektronik", "Audio & Hifi"]
     est_weight_kg: 2.0
     bf_extra_drop_pct: 7
@@ -65,18 +69,38 @@ categories:
     label: "Smart home"
     keywords: ["smart home", "echo dot", "echo show", "alexa", "google nest", "nest hub", "ring",
                "philips hue", "hue", "smart plug", "eero", "mesh", "router", "wifi", "wlan",
-               "fritz!box", "ip camera", "security camera", "robot vacuum", "saugroboter", "roborock"]
+               "fritz!box", "ip camera", "security camera", "doorbell", "türklingel", "thermostat",
+               "smart lock", "smart light", "led strip", "govee", "tado", "eufy", "arlo"]
     feed_categories: ["Smart Home", "Home Automation", "Broadband & Phone Contracts"]
     est_weight_kg: 1.5
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
+  kitchen:
+    label: "Kitchen"
+    keywords: ["air fryer", "heißluftfritteuse", "airfryer", "coffee machine", "coffee maker",
+               "kaffeemaschine", "kaffeevollautomat", "espresso", "nespresso", "dolce gusto", "de'longhi",
+               "delonghi", "sage barista", "milk frother", "milchaufschäumer", "blender", "standmixer",
+               "mixer", "food processor", "küchenmaschine", "kitchenaid", "thermomix", "monsieur cuisine",
+               "kettle", "wasserkocher", "toaster", "microwave", "mikrowelle", "slow cooker", "instant pot",
+               "pressure cooker", "multicooker", "rice cooker", "sous vide", "waffle", "waffeleisen",
+               "cookware", "pan", "pfanne", "pot", "topf", "topfset", "frying pan", "wok", "dutch oven",
+               "le creuset", "staub", "wmf", "fissler", "tefal", "zwilling", "knife", "knives", "messer",
+               "messerset", "cutlery", "besteck", "chopping board", "schneidebrett", "baking", "backform",
+               "ninja", "kenwood", "bosch mum", "soda stream", "sodastream", "vacuum sealer", "vakuumierer",
+               "food storage", "frischhaltedosen", "kitchen scale", "küchenwaage", "grill", "kontaktgrill"]
+    feed_categories: ["Kitchen", "Küche", "Küchengeräte", "Kaffeevollautomaten", "Cookware", "Fryers",
+                      "Cutlery & Flatware", "Toaster Ovens", "Coffee Makers"]
+    est_weight_kg: 4.0
+    bf_extra_drop_pct: 7
+    cm_extra_drop_pct: 2
   appliances:
     label: "Home appliances"
-    keywords: ["washing machine", "waschmaschine", "dryer", "trockner", "dishwasher",
-               "geschirrspüler", "fridge", "kühlschrank", "air fryer", "heißluftfritteuse",
-               "coffee machine", "kaffeevollautomat", "espresso", "vacuum", "staubsauger",
-               "dyson", "microwave", "blender", "thermomix", "kettle"]
-    feed_categories: ["Appliances", "Home Appliances", "Haushalt", "Kitchen"]
+    keywords: ["washing machine", "waschmaschine", "dryer", "trockner", "wäschetrockner", "dishwasher",
+               "geschirrspüler", "spülmaschine", "fridge", "refrigerator", "kühlschrank", "freezer",
+               "gefrierschrank", "vacuum", "staubsauger", "dyson", "robot vacuum", "saugroboter", "roborock",
+               "ecovacs", "wet dry vac", "nass-trockensauger", "air purifier", "luftreiniger", "dehumidifier",
+               "luftentfeuchter", "heater", "heizlüfter", "fan heater", "iron", "bügeleisen", "steam generator"]
+    feed_categories: ["Appliances", "Home Appliances", "Haushalt", "Small Appliances", "Vacuum Cleaners"]
     est_weight_kg: 6.0
     bf_extra_drop_pct: 5
     cm_extra_drop_pct: 2
@@ -114,8 +138,12 @@ categories:
     cm_extra_drop_pct: 2
   home_furniture:
     label: "Home & furniture"
-    keywords: ["sofa", "chair", "stuhl", "desk", "schreibtisch", "mattress", "matratze",
-               "bed", "lamp", "lampe", "furniture", "möbel", "ikea", "bedding", "duvet"]
+    keywords: ["sofa", "couch", "chair", "stuhl", "office chair", "bürostuhl", "desk", "schreibtisch",
+               "mattress", "matratze", "bed", "bett", "pillow", "kissen", "lamp", "lampe", "furniture",
+               "möbel", "ikea", "bedding", "bettwäsche", "duvet", "bettdecke", "towel", "handtuch",
+               "rug", "teppich", "curtain", "vorhang", "shelf", "regal", "wardrobe", "kleiderschrank",
+               "storage box", "aufbewahrung", "candle", "kerze", "drill", "akkuschrauber", "tool set",
+               "werkzeug", "storage"]
     feed_categories: ["Home & Living", "Home Furniture", "Home & Garden", "Home", "Furniture",
                       "Wohnen", "Garden & DIY"]
     est_weight_kg: 5.0

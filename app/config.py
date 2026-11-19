@@ -37,6 +37,8 @@ class EmailCfg(BaseModel):
     waiting_n: int = 8
     alerts_n: int = 8
     quiet_hours: list[int] = Field(default_factory=list)
+    focus_categories: list[str] = Field(default_factory=list)
+    focus_per_category: int = 5
 
 
 class CollectionCfg(BaseModel):
@@ -91,6 +93,11 @@ class Settings(BaseModel):
 
 
 # ---------------------------------------------------------------- stores.yaml
+class FeedCfg(BaseModel):
+    url: str
+    category: str | None = None   # hint used when the title itself is not specific
+
+
 class SourceCfg(BaseModel):
     id: str
     type: str
@@ -99,11 +106,24 @@ class SourceCfg(BaseModel):
     currency: str
     feed_url: str | None = None
     feed_urls: list[str] = Field(default_factory=list)
+    feeds: list[FeedCfg] = Field(default_factory=list)
+    enrich_budget: int | None = None
     site: str | None = None
     queries: list[str] = Field(default_factory=list)
     page_size: int = 50
     marketplace: str | None = None
     max_per_keyword: int = 10
+
+
+def source_feeds(src: "SourceCfg") -> list[FeedCfg]:
+    """All feeds of a source, in order, without duplicates."""
+    out: list[FeedCfg] = []
+    seen: set[str] = set()
+    for f in ([FeedCfg(url=src.feed_url)] if src.feed_url else []) + [FeedCfg(url=u) for u in src.feed_urls] + src.feeds:
+        if f.url not in seen:
+            seen.add(f.url)
+            out.append(f)
+    return out
 
 
 class RetailerCfg(BaseModel):

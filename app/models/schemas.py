@@ -48,6 +48,7 @@ class RawOffer(BaseModel):
     gtin: str | None = None
     mpn: str | None = None
     feed_category: str | None = None
+    category_hint: str | None = None  # from the feed it came from (e.g. a "kitchen" feed)
     availability: str | None = None  # in_stock / out_of_stock / unknown
     shipping_cost: float | None = None
     free_shipping: bool | None = None

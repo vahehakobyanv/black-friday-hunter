@@ -103,7 +103,7 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
             stored = 0
             for offer in result.offers:
                 try:
-                    category = categorize(offer.title, offer.feed_category, cfg.categories)
+                    category = categorize(offer.title, offer.feed_category, cfg.categories, offer.category_hint)
                     if category == NON_PRODUCT:
                         continue
                     product, _specs, _how = repo.find_or_create_product(offer, category, now)

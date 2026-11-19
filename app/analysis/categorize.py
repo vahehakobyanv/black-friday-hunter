@@ -8,7 +8,7 @@ NON_PRODUCT = "non_product"
 OTHER = "other"
 
 
-def categorize(title: str, feed_category: str | None, cfg: CategoriesCfg) -> str:
+def categorize(title: str, feed_category: str | None, cfg: CategoriesCfg, hint: str | None = None) -> str:
     fc = fold(feed_category or "")
     if fc and any(fold(x) == fc for x in cfg.non_product_feed_categories):
         return NON_PRODUCT
@@ -18,6 +18,9 @@ def categorize(title: str, feed_category: str | None, cfg: CategoriesCfg) -> str
     for key, cat in cfg.categories.items():
         if any(contains_phrase(f" {title} ", kw.strip()) for kw in cat.keywords):
             return key
+    # A topical feed (e.g. mydealz "Küche") knows better than a generic label.
+    if hint and hint in cfg.categories:
+        return hint
     # Fall back to the feed's own category name.
     if fc:
         for key, cat in cfg.categories.items():

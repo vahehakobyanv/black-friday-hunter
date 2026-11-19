@@ -211,7 +211,8 @@ def build_sections(deals: list[DealView], cfg: Config) -> ReportSections:
     by_cat: dict[str, list[DealView]] = {}
     for d in deals:
         lst = by_cat.setdefault(d.product.category, [])
-        if len(lst) < e.per_category_n:
+        limit = e.focus_per_category if d.product.category in e.focus_categories else e.per_category_n
+        if len(lst) < limit:
             lst.append(d)
     waiting = sorted((d for d in deals if d.prediction.advice in ("WAIT", "MAYBE WAIT") and d.total >= normal_min),
                      key=lambda d: (d.prediction.advice != "WAIT", -(d.prediction.expected_further_drop_pct or 0)))[: e.waiting_n]

@@ -12,6 +12,7 @@ from email.utils import parsedate_to_datetime
 
 from app.analysis.categorize import NON_PRODUCT, categorize
 from app.collectors.base import CollectContext, Collector, build_offer, normalize_retailer
+from app.config import source_feeds
 from app.models.schemas import PriceKind, RawOffer, ReferenceKind
 from app.utils.http import BlockedError
 from app.utils.text import parse_price, strip_html
@@ -71,7 +72,8 @@ class DealnewsCollector(Collector):
         offers: list[RawOffer] = []
         skipped = 0
         errors = []
-        for url in self.source.feed_urls:
+        for feed in source_feeds(self.source):
+            url = feed.url
             try:
                 resp = ctx.http.get(url)
                 resp.raise_for_status()
@@ -88,7 +90,7 @@ class DealnewsCollector(Collector):
                 if item_id in seen:
                     continue
                 seen.add(item_id)
-                offer = self._to_offer(item, item_id, ctx)
+                offer = self._to_offer(item, item_id, ctx, feed.category)
                 if offer is None:
                     skipped += 1
                 else:
@@ -97,13 +99,13 @@ class DealnewsCollector(Collector):
             raise RuntimeError("; ".join(errors)[:300])
         return offers, skipped
 
-    def _to_offer(self, item: dict, item_id: str, ctx: CollectContext) -> RawOffer | None:
+    def _to_offer(self, item: dict, item_id: str, ctx: CollectContext, hint: str | None = None) -> RawOffer | None:
         title = item["title"]
         if item["deal_type"] not in ("deal", "") or item["price"] is None or item["price"] <= 0:
             return None
         if re.match(r"^(up to|extra|save|buy|get|\d+% off)\b", title, re.I) or " sale" in title.lower()[:40]:
             return None  # store-wide sales, not one product
-        cat = categorize(title, item["category"], ctx.cfg.categories)
+        cat = categorize(title, item["category"], ctx.cfg.categories, hint)
         if cat == NON_PRODUCT:
             return None
         ref, kind = extract_reference(item["description"], item["price"])
@@ -127,6 +129,7 @@ class DealnewsCollector(Collector):
             price_kind=PriceKind.ADVERTISED,
             image_url=item["image"],
             feed_category=item["category"],
+            category_hint=hint,
             availability="unknown",
             shipping_cost=0.0 if free else ship,
             free_shipping=free or None,

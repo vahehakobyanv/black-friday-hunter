@@ -115,3 +115,21 @@ def test_retailer_normalization(cfg):
     assert normalize_retailer("Media Markt", cfg) == "MediaMarkt"
     assert normalize_retailer("Woot! An Amazon Company", cfg) == "Woot"
     assert normalize_retailer("Some Indie Shop", cfg) == "Some Indie Shop"
+
+
+def test_pepper_topic_source_reads_all_feeds_and_dedupes(cfg):
+    src = next(s for s in cfg.stores.sources if s.id == "mydealz_topics")
+    seen_urls = []
+    base = make_transport()
+
+    def handler(request):
+        if "/rss/" in str(request.url):
+            seen_urls.append(str(request.url))
+        return base.handle_request(request)
+
+    import httpx
+    offers, _ = PepperCollector(src).collect(_ctx(cfg, httpx.MockTransport(handler)))
+    assert len(seen_urls) == len(src.feeds)                       # every topic feed fetched
+    ids = [o.source_item_id for o in offers]
+    assert len(ids) == len(set(ids))                               # same fixture in every feed -> deduped
+    assert all(o.category_hint == "gaming" for o in offers)        # first feed's hint wins
