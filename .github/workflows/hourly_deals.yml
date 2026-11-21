@@ -13,6 +13,10 @@ on:
         description: "Send the email report"
         type: boolean
         default: true
+      force_email:
+        description: "Send the email + Telegram summary NOW (ignore the 4-hour interval and night hours)"
+        type: boolean
+        default: false
       telegram_test:
         description: "Send a Telegram test message first"
         type: boolean
@@ -67,6 +71,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.send_email }}" = "false" ]; then
             python -m app.main run --no-email
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_email }}" = "true" ]; then
+            python -m app.main run --force-email
           else
             python -m app.main run
           fi

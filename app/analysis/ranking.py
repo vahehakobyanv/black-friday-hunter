@@ -24,6 +24,7 @@ from app.shipping.currency import FxTable
 from app.utils.text import contains_phrase, fold
 
 PRICE_DROP_RENOTIFY = 0.03
+_CONF_RU = {"low": "низкая", "medium": "средняя", "high": "высокая"}
 
 
 @dataclass
@@ -92,29 +93,29 @@ def _explain(d: DealView, fx: FxTable) -> str:
     parts = []
     l = d.best.listing
     if d.record_low:
-        parts.append("lowest price we have recorded")
+        parts.append("самая низкая цена в нашей истории")
     if d.discount.actual_pct is not None and d.discount.actual_pct > 0.02:
-        parts.append(f"{d.discount.actual_pct * 100:.0f}% below {d.discount.basis}")
+        parts.append(f"на {d.discount.actual_pct * 100:.0f}% ниже {d.discount.basis}")
     if l.community_score is not None and l.community_score >= 100:
-        parts.append(f"{l.community_score:.0f}° community heat on {l.source.split('_')[0]}")
+        parts.append(f"{l.community_score:.0f}° популярности на {l.source.split('_')[0]}")
     if l.staff_pick:
-        parts.append("dealnews editors' pick")
+        parts.append("выбор редакции dealnews")
     if d.others:
         cheaper_than = len([o for o in d.others if o.delivered_usd > d.best.delivered_usd])
         if cheaper_than:
-            parts.append(f"cheapest of {len(d.others) + 1} offers compared")
+            parts.append(f"самое дешёвое из {len(d.others) + 1} сравненных предложений")
     if d.best.delivery.total_usd is not None and d.best.price_usd:
         overhead = (d.best.delivery.total_usd - d.best.price_usd) / d.best.price_usd * 100
         if d.best.delivery.complete:
-            parts.append(f"≈${d.best.delivery.total_usd:,.0f} delivered to Yerevan (+{overhead:.0f}%)")
+            parts.append(f"≈${d.best.delivery.total_usd:,.0f} с доставкой в Ереван (+{overhead:.0f}%)")
         else:
-            parts.append(f"≥${d.best.delivery.total_usd:,.0f} delivered to Yerevan (some costs unknown)")
+            parts.append(f"≥${d.best.delivery.total_usd:,.0f} с доставкой в Ереван (часть расходов неизвестна)")
     if d.prediction.advice in ("WAIT", "MAYBE WAIT") and d.prediction.black_friday_price:
-        parts.append(f"may drop ~{d.prediction.expected_further_drop_pct:.0f}% by Black Friday "
-                     f"({d.prediction.confidence} confidence)")
+        parts.append(f"может подешеветь ещё на ~{d.prediction.expected_further_drop_pct:.0f}% к Black Friday "
+                     f"(надёжность: {_CONF_RU.get(d.prediction.confidence, d.prediction.confidence)})")
     if d.watch:
-        parts.append("on your watchlist: " + ", ".join(d.watch))
-    return "; ".join(parts) or "limited data"
+        parts.append("в вашем списке желаний: " + ", ".join(d.watch))
+    return "; ".join(parts) or "мало данных"
 
 
 def build_deals(repo: Repository, cfg: Config, fx: FxTable, now: datetime, run_started: datetime) -> list[DealView]:
@@ -333,13 +334,13 @@ def select_alerts(deals: list[DealView], cfg: Config, repo: Repository) -> list[
             continue
         reasons = []
         if d.total >= a.min_score:
-            reasons.append(f"{d.label} deal ({d.total:.0f}/100)")
+            reasons.append(f"высокий балл ({d.total:.0f}/100)")
         if a.watchlist_target_hit and d.watch_hit:
-            reasons.append("your target price reached")
+            reasons.append("достигнута ваша целевая цена")
         if d.record_low and d.total >= a.record_low_min_score:
-            reasons.append("record low in our history")
+            reasons.append("рекордно низкая цена в нашей истории")
         if d.priority == 1 and d.watch and d.total >= a.priority1_min_score:
-            reasons.append("priority item: " + ", ".join(d.watch))
+            reasons.append("приоритетный товар: " + ", ".join(d.watch))
         if not reasons:
             continue
         n = repo.notification(d.product.id)
@@ -398,12 +399,12 @@ def build_parcel_plan(top: list[DealView], priorities: list[PriorityTier], cfg: 
         if combined > limit:
             weight = (a.deal.best.delivery.weight_kg or 0) + (b.deal.best.delivery.weight_kg or 0)
             duty, _ = customs_duty_eur(combined, weight, cfg)
-            tips.append(f"{region}: “{a.deal.best.listing.title[:40]}” + “{b.deal.best.listing.title[:40]}” in ONE parcel "
-                        f"= €{combined:.0f} → duty ≈ €{duty:.0f}. Ask the forwarder to ship them as separate parcels "
-                        f"and both stay duty-free.")
-    tips.append(f"Duty-free limit: €{limit:g} and {regime.duty_free_weight_kg:g} kg per parcel; above it you pay "
-                f"{regime.rate_on_excess_pct:g}% of the excess. The value counted is the product price plus shipping "
-                f"to the forwarder. Confirm the per-parcel rule with your forwarder before ordering several items.")
+            tips.append(f"{region}: «{a.deal.best.listing.title[:40]}» + «{b.deal.best.listing.title[:40]}» в ОДНОЙ посылке "
+                        f"= €{combined:.0f} → пошлина ≈ €{duty:.0f}. Попросите форвардера отправить их отдельными посылками — "
+                        f"тогда обе пройдут без пошлины.")
+    tips.append(f"Беспошлинный лимит: €{limit:g} и {regime.duty_free_weight_kg:g} кг на посылку; сверх него — "
+                f"{regime.rate_on_excess_pct:g}% от превышения. Считается цена товара плюс доставка до форвардера. "
+                f"Перед заказом нескольких товаров уточните правило «на посылку» у форвардера.")
     return ParcelPlan(limit_eur=limit, rows=rows, tips=tips)
 
 

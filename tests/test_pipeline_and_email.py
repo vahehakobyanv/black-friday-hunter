@@ -1,5 +1,5 @@
 """End-to-end runs against recorded real responses (no live web, no real email)."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
 
@@ -23,11 +23,11 @@ def test_full_run_without_email(cfg, now, tmp_path):
     assert out.offers > 10 and out.deals > 5
     assert out.report_path and out.report_path.exists()
     html = out.report_path.read_text()
-    for section in ("TOP", "BEST NEW OPPORTUNITIES", "CATEGORY SUMMARY", "PRICE PREDICTIONS", "SOURCES"):
+    for section in ("ТОП-", "ЛУЧШИЕ НОВЫЕ ПРЕДЛОЖЕНИЯ", "ПО КАТЕГОРИЯМ", "ПРОГНОЗ ЦЕН", "ИСТОЧНИКИ"):
         assert section in html
-    assert "Delivered to Yerevan" in html and "Predicted Black Friday" in html
-    assert out.subject.startswith("Black Friday Hunter | Top ")
-    assert "19 November | 14:00" in out.subject          # 10:00 UTC = 14:00 Yerevan
+    assert "С доставкой в Ереван" in html and "Прогноз на Black Friday" in html
+    assert out.subject.startswith("Black Friday Hunter | Топ-")
+    assert "19 ноября | 14:00" in out.subject          # 10:00 UTC = 14:00 Yerevan
     assert {s.source for s in out.statuses} >= {"mydealz_hot", "hotukdeals_hot", "dealnews"}
 
 
@@ -51,7 +51,7 @@ def test_failed_source_does_not_stop_report(cfg, now, tmp_path):
     failed = [s for s in out.statuses if not s.ok]
     assert {s.source for s in failed} == {"mydealz_hot", "mydealz_new", "mydealz_topics"}
     assert out.deals > 0
-    assert "Sources failed this run" in out.report_path.read_text()
+    assert "не сработали источники" in out.report_path.read_text()
 
 
 class FakeSMTP:
@@ -94,14 +94,14 @@ def test_email_is_sent_and_repeats_are_not_new(cfg, now, tmp_path, monkeypatch):
     assert msg.get_body(("html",)) is not None and msg.get_body(("plain",)) is not None
     assert _count(cfg, Notification) > 0
     html1 = out1.report_path.read_text()
-    assert ">NEW<" in html1
+    assert ">НОВОЕ<" in html1
 
     out2 = run_once(cfg, send=True, transport=t, now=now + timedelta(hours=1), report_dir=tmp_path,
                     sleep=lambda s: None)
     assert out2.email_sent and len(FakeSMTP.sent) == 2   # an email every hour, even with nothing new
     html2 = out2.report_path.read_text()
-    assert "SEEN BEFORE" in html2
-    assert "no new deals" in out2.subject or "alert" in out2.subject
+    assert "УЖЕ БЫЛО" in html2
+    assert "новых сделок нет" in out2.subject or "оповещ" in out2.subject
 
 
 def test_missing_gmail_secret_fails_cleanly_but_saves_data(cfg, now, tmp_path):
@@ -166,3 +166,18 @@ def test_skipped_email_still_collects_and_saves(cfg, now, tmp_path):
     out = run_once(cfg, send=True, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
     assert not out.email_sent and out.email_skipped == "quiet hours" and not out.errors
     assert _count(cfg, Product) > 0
+
+
+def test_force_email_ignores_interval_and_quiet_hours(cfg, tmp_path, monkeypatch):
+    FakeSMTP.sent = []
+    real_send = gmail.send_email
+    monkeypatch.setattr("app.pipeline.send_email", lambda *a, **k: real_send(*a, **k, smtp_factory=FakeSMTP))
+    cfg.secrets.gmail_address = "vahehakobyanv@gmail.com"
+    cfg.secrets.gmail_app_password = "abcdefghijklmnop"
+    night = datetime(2026, 11, 21, 23, 0, 0)          # 03:00 in Yerevan: quiet hours
+    t = make_transport()
+    out = run_once(cfg, send=True, transport=t, now=night, report_dir=tmp_path, sleep=lambda s: None)
+    assert not out.email_sent and out.email_skipped == "quiet hours"
+    out = run_once(cfg, send=True, transport=t, now=night, report_dir=tmp_path, sleep=lambda s: None,
+                   force_email=True)
+    assert out.email_sent and len(FakeSMTP.sent) == 1

@@ -27,7 +27,7 @@ from app.database.models import Run
 from app.database.repository import Repository, make_engine, make_session_factory
 from app.models.schemas import CollectorStatus
 from app.notifications.gmail import send_email
-from app.notifications.report import RenderedReport, render_report
+from app.notifications.report import RenderedReport, render_report, rudate
 from app.notifications.telegram import format_alerts, format_summary, send_telegram
 from app.shipping.currency import FxTable, load_rates
 from app.utils.http import PoliteClient
@@ -97,7 +97,9 @@ def should_send_email(cfg: Config, now: datetime, last_email: datetime | None) -
 
 
 def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport | None = None,
-             now: datetime | None = None, report_dir: Path | None = None, sleep=None) -> RunOutcome:
+             now: datetime | None = None, report_dir: Path | None = None, sleep=None,
+             force_email: bool = False) -> RunOutcome:
+    """force_email: send the report now (manual run), ignoring the 4-hour interval and quiet hours."""
     now = now or utcnow()
     engine = make_engine(cfg.db_path)
     Session = make_session_factory(engine)
@@ -202,10 +204,11 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
         s = cfg.secrets
         recipients = s.email_to or cfg.settings.email.recipients
         sender = s.gmail_address or cfg.settings.email.sender
-        quiet = in_quiet_hours(cfg, now)
+        quiet = in_quiet_hours(cfg, now) and not force_email
         alerts_delivered = False
         if report is not None and send:
-            send_now, why = should_send_email(cfg, now, last.started_at if last else None)
+            send_now, why = (True, "forced") if force_email else \
+                should_send_email(cfg, now, last.started_at if last else None)
             if not send_now:
                 log.info("email skipped: %s", why)
                 skipped_reason = why
@@ -249,7 +252,7 @@ def run_once(cfg: Config, *, send: bool = True, transport: httpx.BaseTransport |
         # ---------------------------------------------------------------- Telegram
         tg = cfg.settings.telegram
         if send and tg.enabled and s.telegram_bot_token and s.telegram_chat_id and not quiet and sections is not None:
-            when = now.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(cfg.settings.app.timezone)).strftime("%d %b %H:%M")
+            when = rudate(now.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(cfg.settings.app.timezone)), with_time=True)
             try:
                 if tg.send_alerts and alerts:
                     send_telegram(s.telegram_bot_token, s.telegram_chat_id, format_alerts(alerts, when))

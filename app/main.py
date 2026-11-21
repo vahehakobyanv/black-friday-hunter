@@ -21,7 +21,7 @@ def cmd_run(args) -> int:
     from app.pipeline import run_once
 
     cfg = load_config()
-    outcome = run_once(cfg, send=not args.no_email)
+    outcome = run_once(cfg, send=not args.no_email, force_email=args.force_email)
     log.info("run finished", extra={"ctx_run": outcome.run_id, "ctx_offers": outcome.offers,
                                     "ctx_deals": outcome.deals, "ctx_email_sent": outcome.email_sent,
                                     "ctx_errors": outcome.errors, "ctx_subject": outcome.subject})
@@ -117,6 +117,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd")
     p_run = sub.add_parser("run")
     p_run.add_argument("--no-email", action="store_true")
+    p_run.add_argument("--force-email", action="store_true",
+                       help="send the report now, ignoring the email interval and quiet hours")
     sub.add_parser("test-email")
     sub.add_parser("stats")
     sub.add_parser("telegram-setup")

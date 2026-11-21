@@ -9,28 +9,28 @@
 sources:
   - id: mydealz_hot
     type: pepper
-    enabled: true
+    enabled: false   # USA only (user decision 2026-11-22)
     region: DE
     currency: EUR
     feed_url: "https://www.mydealz.de/rss/hot"
     site: "https://www.mydealz.de"
   - id: mydealz_new
     type: pepper
-    enabled: true
+    enabled: false   # USA only (user decision 2026-11-22)
     region: DE
     currency: EUR
     feed_url: "https://www.mydealz.de/rss/new"
     site: "https://www.mydealz.de"
   - id: hotukdeals_hot
     type: pepper
-    enabled: true
+    enabled: false   # USA only (user decision 2026-11-22)
     region: UK
     currency: GBP
     feed_url: "https://www.hotukdeals.com/rss/hot"
     site: "https://www.hotukdeals.com"
   - id: hotukdeals_new
     type: pepper
-    enabled: true
+    enabled: false   # USA only (user decision 2026-11-22)
     region: UK
     currency: GBP
     feed_url: "https://www.hotukdeals.com/rss/new"
@@ -39,7 +39,7 @@ sources:
   # kitchen deals. `category` is a hint used when the title alone is not specific.
   - id: mydealz_topics
     type: pepper
-    enabled: true
+    enabled: false   # USA only (user decision 2026-11-22)
     region: DE
     currency: EUR
     site: "https://www.mydealz.de"
@@ -59,7 +59,7 @@ sources:
       - {url: "https://www.mydealz.de/rss/gruppe/home-living", category: home_furniture}
   - id: hotukdeals_topics
     type: pepper
-    enabled: true
+    enabled: false   # USA only (user decision 2026-11-22)
     region: UK
     currency: GBP
     site: "https://www.hotukdeals.com"
@@ -134,6 +134,27 @@ sources:
       - {url: "https://9to5toys.com/feed/"}
       - {url: "https://9to5toys.com/guides/apple/feed/"}
       - {url: "https://9to5toys.com/guides/games/feed/", category: gaming}
+  - id: androidpolice
+    type: editorial_rss
+    enabled: true
+    region: US
+    currency: USD
+    feeds:
+      - {url: "https://www.androidpolice.com/feed/deals/"}
+  - id: tomsguide
+    type: editorial_rss
+    enabled: true
+    region: US
+    currency: USD
+    feeds:
+      - {url: "https://www.tomsguide.com/feeds.xml"}
+  - id: wccftech
+    type: editorial_rss
+    enabled: true
+    region: US
+    currency: USD
+    feeds:
+      - {url: "https://www.wccftech.com/category/deals/feed"}
   - id: bf_ads
     type: bf_ads
     enabled: true

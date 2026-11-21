@@ -18,19 +18,19 @@ def names(title, cfg):
 @pytest.mark.parametrize("title,expected", [
     ("Sony PlayStation 5 Slim Konsole Disc Edition", {"PlayStation 5"}),
     ("PS5 Pro Konsole 2TB", {"PlayStation 5 Pro"}),
-    ("Ghost of Yōtei (PS5)", {"PlayStation games"}),
-    ("Marvel's Wolverine for PS5", {"PlayStation games"}),
+    ("Ghost of Yōtei (PS5)", {"Игры PlayStation"}),
+    ("Marvel's Wolverine for PS5", {"Игры PlayStation"}),
     ("DualSense Wireless Controller PS5", set()),
-    ("PS5 Pro Enhanced: Gran Turismo 7 (PS5)", {"PlayStation games"}),
+    ("PS5 Pro Enhanced: Gran Turismo 7 (PS5)", {"Игры PlayStation"}),
     ("PlayStation 5 Pro 2TB", {"PlayStation 5 Pro"}),
     ("Apple MacBook Air 13\" M4 16GB 512GB", {"MacBook Air"}),
     ("Apple MacBook Pro 14\" M5 Pro", {"MacBook Pro"}),
     ("Xbox Series X Console 1TB", {"Xbox Series X"}),
     ("Xbox Series X Wireless Controller", set()),
     ("MacBook Air Hülle 13 Zoll", set()),
-    ("Apple iPad Air 11\" M3 128GB", {"iPad", "Android tablets"} - {"Android tablets"}),
-    ("Samsung Galaxy Tab S10 FE 128GB", {"Android tablets"}),
-    ("Apple AirPods Pro 3", {"AirPods & headphones"}),
+    ("Apple iPad Air 11\" M3 128GB", {"iPad", "Планшеты Android"} - {"Планшеты Android"}),
+    ("Samsung Galaxy Tab S10 FE 128GB", {"Планшеты Android"}),
+    ("Apple AirPods Pro 3", {"AirPods и наушники"}),
 ])
 def test_watchlist_matching(cfg, title, expected):
     assert names(title, cfg) == expected
@@ -65,7 +65,7 @@ def test_instant_alert_email_between_reports_and_no_repeat(cfg, now, tmp_path, m
     t = make_transport()
     cfg.settings.alerts.enabled = False
     run_once(cfg, send=True, transport=t, now=now, report_dir=tmp_path, sleep=lambda s: None)
-    assert len(sent) == 1 and "Top" in sent[0]["Subject"]                    # regular report
+    assert len(sent) == 1 and "Топ-" in sent[0]["Subject"]                    # regular report
 
     cfg.settings.alerts.enabled = True
     cfg.settings.alerts.min_score = 0                                          # force alerts
@@ -73,9 +73,9 @@ def test_instant_alert_email_between_reports_and_no_repeat(cfg, now, tmp_path, m
     out = run_once(cfg, send=True, transport=t, now=now + timedelta(hours=1), report_dir=tmp_path,
                    sleep=lambda s: None)
     assert not out.email_sent and out.alert_email_sent and len(sent) == 2      # alert only
-    assert sent[1]["Subject"].startswith("🔥 Deal alert")
+    assert sent[1]["Subject"].startswith("🔥 Срочно")
     html = sent[1].get_body(("html",)).get_content()
-    assert "IMPORTANT ALERTS" in html and "TOP 10" not in html
+    assert "ВАЖНЫЕ ОПОВЕЩЕНИЯ" in html and "ТОП-10" not in html
 
     out = run_once(cfg, send=True, transport=t, now=now + timedelta(hours=2), report_dir=tmp_path,
                    sleep=lambda s: None)
@@ -99,7 +99,7 @@ def test_telegram_sent_with_report_and_alerts(cfg, now, tmp_path, monkeypatch):
     cfg.settings.alerts.min_score = 0
     out = run_once(cfg, send=True, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
     assert out.telegram_sent and len(tg) == 2
-    assert tg[0].startswith("🔥 <b>Deal alert</b>") and "📬" in tg[1]
+    assert tg[0].startswith("🔥 <b>Срочно") and "📬" in tg[1]
 
 
 def test_telegram_api_call_and_chunking():
@@ -120,9 +120,9 @@ def test_telegram_api_call_and_chunking():
 def test_report_has_priorities_and_customs_planner(cfg, now, tmp_path):
     out = run_once(cfg, send=False, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
     html = out.report_path.read_text()
-    assert "YOUR PRIORITIES" in html and "PlayStation &amp; MacBook" in html and "Home &amp; kitchen" in html
-    assert "CUSTOMS €200 PLANNER" in html
-    assert "DUTY-FREE" in html
+    assert "ВАШИ ПРИОРИТЕТЫ" in html and "PlayStation, Xbox и MacBook" in html and "Дом и кухня" in html
+    assert "ПЛАНИРОВЩИК ТАМОЖНИ €200" in html
+    assert "БЕЗ ПОШЛИНЫ" in html
 
 
 def test_old_database_is_migrated(tmp_path):
@@ -151,4 +151,4 @@ def test_roundups_are_not_products(cfg, title):
 
 def test_game_mentioning_ps5_pro_is_not_the_console(cfg):
     t = "Mortal Kombat 1 Definitive Edition (PS5 / PS5 Pro Enhanced)"
-    assert "PlayStation 5 Pro" not in names(t, cfg) and "PlayStation games" in names(t, cfg)
+    assert "PlayStation 5 Pro" not in names(t, cfg) and "Игры PlayStation" in names(t, cfg)

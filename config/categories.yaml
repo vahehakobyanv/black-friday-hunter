@@ -14,7 +14,7 @@
 
 categories:
   pc_components:
-    label: "PC components"
+    label: "Комплектующие для ПК"
     keywords: ["rtx", "geforce", "radeon", "rx 7*", "rx 9*", "grafikkarte", "graphics card", "gpu",
                "ryzen", "core i3", "core i5", "core i7", "core i9", "core ultra", "prozessor", "cpu",
                "ddr4", "ddr5", "ram kit", "arbeitsspeicher", "nvme", "ssd", "m.2", "hdd", "festplatte",
@@ -26,7 +26,7 @@ categories:
     bf_extra_drop_pct: 5
     cm_extra_drop_pct: 2
   laptops:
-    label: "Computers & laptops"
+    label: "Компьютеры и ноутбуки"
     keywords: ["laptop", "notebook", "macbook", "chromebook", "thinkpad", "zenbook", "vivobook",
                "ideapad", "legion", "rog strix", "xps", "spectre", "envy", "desktop pc", "mac mini",
                "imac", "mini pc", "gaming pc"]
@@ -35,7 +35,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   smartphones:
-    label: "Smartphones & accessories"
+    label: "Смартфоны и аксессуары"
     keywords: ["iphone", "galaxy s*", "galaxy z*", "galaxy a*", "pixel", "smartphone", "handy",
                "oneplus", "xiaomi", "redmi", "airpods", "galaxy buds", "earbuds", "charger",
                "power bank", "powerbank", "ipad", "tablet", "galaxy tab"]
@@ -45,7 +45,7 @@ categories:
     bf_extra_drop_pct: 5
     cm_extra_drop_pct: 2
   gaming:
-    label: "Gaming consoles & accessories"
+    label: "Игровые консоли и игры"
     keywords: ["playstation", "ps5", "ps4", "ps vr2", "playstation portal", "xbox", "game pass",
                "nintendo", "switch 2", "switch oled", "joy-con", "amiibo", "steam deck", "meta quest",
                "dualsense", "dualshock", "controller", "gamepad", "gaming headset", "rog ally", "legion go",
@@ -55,7 +55,7 @@ categories:
     bf_extra_drop_pct: 5
     cm_extra_drop_pct: 2
   tv_electronics:
-    label: "TVs & electronics"
+    label: "Телевизоры и электроника"
     keywords: ["oled", "qled", "mini-led", "neo qled", "fernseher", "smart tv", "tv", "4k tv", "uhd tv",
                "soundbar", "home theater", "heimkino", "av receiver", "headphones", "kopfhörer",
                "earphones", "speaker", "lautsprecher", "camera", "kamera", "projector", "beamer",
@@ -66,7 +66,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   smart_home:
-    label: "Smart home"
+    label: "Умный дом"
     keywords: ["smart home", "echo dot", "echo show", "alexa", "google nest", "nest hub", "ring",
                "philips hue", "hue", "smart plug", "eero", "mesh", "router", "wifi", "wlan",
                "fritz!box", "ip camera", "security camera", "doorbell", "türklingel", "thermostat",
@@ -76,7 +76,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   kitchen:
-    label: "Kitchen"
+    label: "Кухня"
     keywords: ["air fryer", "heißluftfritteuse", "airfryer", "coffee machine", "coffee maker",
                "kaffeemaschine", "kaffeevollautomat", "espresso", "nespresso", "dolce gusto", "de'longhi",
                "delonghi", "sage barista", "milk frother", "milchaufschäumer", "blender", "standmixer",
@@ -94,7 +94,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   appliances:
-    label: "Home appliances"
+    label: "Бытовая техника"
     keywords: ["washing machine", "waschmaschine", "dryer", "trockner", "wäschetrockner", "dishwasher",
                "geschirrspüler", "spülmaschine", "fridge", "refrigerator", "kühlschrank", "freezer",
                "gefrierschrank", "vacuum", "staubsauger", "dyson", "robot vacuum", "saugroboter", "roborock",
@@ -105,7 +105,7 @@ categories:
     bf_extra_drop_pct: 5
     cm_extra_drop_pct: 2
   clothing:
-    label: "Clothing & shoes"
+    label: "Одежда и обувь"
     keywords: ["sneaker", "shoes", "schuhe", "jacket", "jacke", "hoodie", "t-shirt", "jeans",
                "nike", "adidas", "puma", "new balance", "north face", "levi's", "boots"]
     feed_categories: ["Fashion", "Clothing", "Shoes", "Fashion & Accessories", "Clothing & Accessories"]
@@ -113,7 +113,7 @@ categories:
     bf_extra_drop_pct: 10
     cm_extra_drop_pct: 3
   watches:
-    label: "Watches & accessories"
+    label: "Часы и аксессуары"
     keywords: ["watch", "uhr", "smartwatch", "apple watch", "galaxy watch", "garmin", "fitbit",
                "casio", "seiko", "sunglasses", "wallet"]
     feed_categories: ["Watches", "Jewelry", "Wearables"]
@@ -121,7 +121,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   travel:
-    label: "Travel & luggage"
+    label: "Путешествия и багаж"
     keywords: ["luggage", "suitcase", "koffer", "backpack", "rucksack", "samsonite", "carry-on",
                "travel bag", "reisetasche"]
     feed_categories: ["Luggage & Travel Gear", "Travel"]
@@ -129,7 +129,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   sports:
-    label: "Sports & fitness"
+    label: "Спорт и фитнес"
     keywords: ["fitness", "treadmill", "laufband", "dumbbell", "hantel", "yoga", "bike",
                "fahrrad", "e-bike", "tent", "zelt", "running", "camping", "kettlebell"]
     feed_categories: ["Sports & Outdoors", "Sport & Outdoor", "Sports"]
@@ -137,7 +137,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   home_furniture:
-    label: "Home & furniture"
+    label: "Дом и мебель"
     keywords: ["sofa", "couch", "chair", "stuhl", "office chair", "bürostuhl", "desk", "schreibtisch",
                "mattress", "matratze", "bed", "bett", "pillow", "kissen", "lamp", "lampe", "furniture",
                "möbel", "ikea", "bedding", "bettwäsche", "duvet", "bettdecke", "towel", "handtuch",
@@ -150,7 +150,7 @@ categories:
     bf_extra_drop_pct: 7
     cm_extra_drop_pct: 2
   books:
-    label: "Books & education"
+    label: "Книги и обучение"
     keywords: ["book", "buch", "kindle unlimited", "audible", "course", "udemy", "coursera",
                "textbook", "hardcover", "paperback"]
     feed_categories: ["Books", "Books & Magazines", "Education", "Bücher"]

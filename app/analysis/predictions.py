@@ -24,7 +24,7 @@ def predict(price: float, currency: str, stats: HistoryStats, cat: CategoryCfg |
 
     if today > cyber_monday:
         # Season is over; next prediction needs next year's data.
-        pred.method = "after Cyber Monday — next prediction from next season's history"
+        pred.method = "после Cyber Monday — следующий прогноз по истории нового сезона"
         pred.confidence = "none"
         pred.advice = "NO DATA"
         return pred
@@ -34,7 +34,7 @@ def predict(price: float, currency: str, stats: HistoryStats, cat: CategoryCfg |
         pred.black_friday_price = round(price, 2) if today == black_friday else None
         pred.cyber_monday_price = round(price * (1 - cm_drop), 2) if today < cyber_monday else round(price, 2)
         pred.confidence = "medium" if today == cyber_monday else "low"
-        pred.method = "inside Black Friday week: current price is the event price"
+        pred.method = "неделя Black Friday: текущая цена и есть цена распродажи"
         pred.expected_further_drop_pct = round((price - pred.cyber_monday_price) / price * 100, 1)
         pred.advice = "BUY NOW" if pred.expected_further_drop_pct < WAIT_THRESHOLD_PCT else "WAIT"
         return pred
@@ -45,18 +45,18 @@ def predict(price: float, currency: str, stats: HistoryStats, cat: CategoryCfg |
     if advertised_discount is not None and advertised_discount >= 0.20:
         bf_drop /= 2
     heuristic = price * (1 - bf_drop)
-    method, confidence = "category heuristic (assumption, not data)", "low"
+    method, confidence = "типичное поведение категории (допущение, не данные)", "low"
     estimate = heuristic
 
     if stats.trend_pct_per_week is not None and stats.distinct_days >= 14:
         trend_est = price * (1 + stats.trend_pct_per_week / 100 * weeks_left)
         trend_est = min(max(trend_est, price * 0.7), price)
         estimate = min(heuristic, trend_est)
-        method, confidence = f"own 14-day trend ({stats.trend_pct_per_week:+.1f}%/week) + heuristic", "medium"
+        method, confidence = f"наш тренд за 14 дней ({stats.trend_pct_per_week:+.1f}%/нед.) + типичное поведение", "medium"
 
     if stats.last_year_bf_price is not None:
         estimate = min(estimate, stats.last_year_bf_price) if stats.last_year_bf_price < price else estimate
-        method, confidence = "last year's Black Friday price (own history)", "high"
+        method, confidence = "цена прошлой Black Friday (наша история)", "high"
 
     pred.black_friday_price = round(estimate, 2)
     pred.cyber_monday_price = round(estimate * (1 - cm_drop), 2)

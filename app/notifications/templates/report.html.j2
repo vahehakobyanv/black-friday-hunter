@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -28,7 +28,7 @@
 {%- endmacro -%}
 
 {%- macro kind(k) -%}
-<span style="font-size:10px;color:{{ C_MUTED }};text-transform:uppercase;">{{ k }}</span>
+<span style="font-size:10px;color:{{ C_MUTED }};text-transform:uppercase;">{{ K(k) }}</span>
 {%- endmacro -%}
 
 {%- macro deal_card(d, rank=None, compact=False) -%}
@@ -38,23 +38,23 @@
   {% if not compact %}
   <td class="img-cell" width="130" valign="top" style="padding:12px;width:130px;">
     {% if l.image_url %}<a href="{{ l.url }}"><img src="{{ l.image_url }}" width="120" alt="" style="display:block;width:120px;max-width:120px;height:auto;border-radius:6px;border:0;"></a>
-    {% else %}<div style="width:120px;height:90px;background:{{ C_BG }};border-radius:6px;color:{{ C_MUTED }};font-size:11px;text-align:center;line-height:90px;">no image</div>{% endif %}
+    {% else %}<div style="width:120px;height:90px;background:{{ C_BG }};border-radius:6px;color:{{ C_MUTED }};font-size:11px;text-align:center;line-height:90px;">нет фото</div>{% endif %}
   </td>
   {% endif %}
   <td class="info-cell" valign="top" style="padding:12px 12px 12px {{ '12px' if compact else '0' }};">
     <div style="margin-bottom:4px;">
       {% if rank %}<span style="font-weight:700;color:{{ C_MUTED }};">#{{ rank }}</span>{% endif %}
-      {{ badge(d.label ~ " · " ~ ("%.0f" % d.total), LABEL_COLORS.get(d.label, "#6b7280")) }}
-      {{ badge(d.status, STATUS_COLORS.get(d.status, "#6b7280")) }}
-      {% if d.record_low %}{{ badge("RECORD LOW", "#7c3aed") }}{% endif %}
-      {% if d.best.delivery.duty_eur == 0 %}{{ badge("DUTY-FREE ≤€" ~ ("%.0f" % d.best.delivery.duty_free_limit_eur), "#0f766e") }}{% elif d.best.delivery.duty_eur %}{{ badge("CUSTOMS ≈€" ~ ("%.0f" % d.best.delivery.duty_eur), "#b45309") }}{% endif %}
-      {% if d.watch_hit %}{{ badge("WATCHLIST TARGET HIT", "#db2777") }}{% elif d.watch %}{{ badge("WATCHLIST", "#9d174d") }}{% endif %}
-      {% if d.stale %}{{ badge("STALE · last seen " ~ ("%.0f" % d.age_hours) ~ "h ago", "#92400e") }}{% endif %}
+      {{ badge(L(d.label) ~ " · " ~ ("%.0f" % d.total), LABEL_COLORS.get(d.label, "#6b7280")) }}
+      {{ badge(ST(d.status), STATUS_COLORS.get(d.status, "#6b7280")) }}
+      {% if d.record_low %}{{ badge("РЕКОРДНО НИЗКАЯ", "#7c3aed") }}{% endif %}
+      {% if d.best.delivery.duty_eur == 0 %}{{ badge("БЕЗ ПОШЛИНЫ ≤€" ~ ("%.0f" % d.best.delivery.duty_free_limit_eur), "#0f766e") }}{% elif d.best.delivery.duty_eur %}{{ badge("ПОШЛИНА ≈€" ~ ("%.0f" % d.best.delivery.duty_eur), "#b45309") }}{% endif %}
+      {% if d.watch_hit %}{{ badge("ЦЕЛЕВАЯ ЦЕНА ДОСТИГНУТА", "#db2777") }}{% elif d.watch %}{{ badge("СПИСОК ЖЕЛАНИЙ", "#9d174d") }}{% endif %}
+      {% if d.stale %}{{ badge("УСТАРЕЛО · видели " ~ ("%.0f" % d.age_hours) ~ " ч назад", "#92400e") }}{% endif %}
     </div>
     <div style="font-size:15px;font-weight:700;line-height:1.3;margin:4px 0;"><a href="{{ l.url }}" style="color:{{ C_TEXT }};text-decoration:none;">{{ l.title }}</a></div>
     <div style="font-size:12px;color:{{ C_MUTED }};margin-bottom:6px;">
-      {{ category_label(d.product.category) }}{% if d.product.model %} · {{ d.product.model }}{% endif %} · {{ l.retailer }} ({{ l.region }}) via {{ source_label(l.source) }}
-      {% if l.voucher_code %} · code <b>{{ l.voucher_code }}</b>{% endif %}
+      {{ category_label(d.product.category) }}{% if d.product.model %} · {{ d.product.model }}{% endif %} · {{ l.retailer }} ({{ l.region }}) · источник {{ source_label(l.source) }}
+      {% if l.voucher_code %} · промокод <b>{{ l.voucher_code }}</b>{% endif %}
     </div>
     <table role="presentation" class="kv" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.5;">
       <tr>
@@ -62,38 +62,38 @@
           <b style="font-size:17px;">{{ money(l.last_price, l.currency) }}</b>
           {% if l.currency != "USD" %}<span style="color:{{ C_MUTED }};">≈ {{ money(d.best.price_usd, "USD") }}</span>{% endif %}
           {{ kind(l.price_kind) }}<br>
-          Previous: {% if l.last_reference_price %}<s>{{ money(l.last_reference_price, l.currency) }}</s> <span style="color:{{ C_MUTED }};">({{ ref_label(l.reference_kind) }})</span>{% else %}<span style="color:{{ C_MUTED }};">unavailable</span>{% endif %}<br>
-          Actual discount: {% if d.discount.actual_pct is not none %}<b>{{ "%.0f" % (d.discount.actual_pct * 100) }}%</b> <span style="color:{{ C_MUTED }};">vs {{ d.discount.basis }}</span>{% else %}<span style="color:{{ C_MUTED }};">unverifiable</span>{% endif %}<br>
-          Historical low: {% if d.stats.lowest is not none %}{{ money(d.stats.lowest, d.stats.currency) }} <span style="color:{{ C_MUTED }};">(own data since {{ d.stats.first_seen.strftime("%d %b") }}, {{ d.stats.distinct_days }} day{{ "s" if d.stats.distinct_days != 1 }})</span>{% else %}<span style="color:{{ C_MUTED }};">unavailable</span>{% endif %}<br>
-          30/90/180-day avg: {{ opt_money(d.stats.avg_30d, d.stats.currency) }} / {{ opt_money(d.stats.avg_90d, d.stats.currency) }} / {{ opt_money(d.stats.avg_180d, d.stats.currency) }}
+          Прежняя цена: {% if l.last_reference_price %}<s>{{ money(l.last_reference_price, l.currency) }}</s> <span style="color:{{ C_MUTED }};">({{ ref_label(l.reference_kind) }})</span>{% else %}<span style="color:{{ C_MUTED }};">нет данных</span>{% endif %}<br>
+          Реальная скидка: {% if d.discount.actual_pct is not none %}<b>{{ "%.0f" % (d.discount.actual_pct * 100) }}%</b> <span style="color:{{ C_MUTED }};">от {{ d.discount.basis }}</span>{% else %}<span style="color:{{ C_MUTED }};">не проверить</span>{% endif %}<br>
+          Исторический минимум: {% if d.stats.lowest is not none %}{{ money(d.stats.lowest, d.stats.currency) }} <span style="color:{{ C_MUTED }};">(наши данные с {{ rudate(d.stats.first_seen) }}, дней: {{ d.stats.distinct_days }})</span>{% else %}<span style="color:{{ C_MUTED }};">нет данных</span>{% endif %}<br>
+          Средняя за 30/90/180 дней: {{ opt_money(d.stats.avg_30d, d.stats.currency) }} / {{ opt_money(d.stats.avg_90d, d.stats.currency) }} / {{ opt_money(d.stats.avg_180d, d.stats.currency) }}
         </td>
         <td valign="top" style="width:50%;">
-          Predicted Black Friday: {% if d.prediction.black_friday_price %}<b>{{ money(d.prediction.black_friday_price, d.prediction.currency) }}</b>{% else %}<span style="color:{{ C_MUTED }};">n/a</span>{% endif %} {{ kind("predicted · " ~ d.prediction.confidence ~ " confidence") }}<br>
-          Predicted Cyber Monday: {% if d.prediction.cyber_monday_price %}{{ money(d.prediction.cyber_monday_price, d.prediction.currency) }}{% else %}<span style="color:{{ C_MUTED }};">n/a</span>{% endif %}<br>
-          Advice: <b>{{ d.prediction.advice }}</b><br>
-          Delivered to Yerevan: {% if d.best.delivery.total_usd is not none %}{% set ge = "" if d.best.delivery.complete else "≥ " %}<b>{{ ge }}{{ money(d.best.delivery.total_usd, "USD") }}</b> / {{ ge }}{{ amd(d.best.delivery.total_amd) }}{% if not d.best.delivery.complete %} <span style="color:#b45309;">(some costs unknown)</span>{% endif %}{% else %}<span style="color:{{ C_MUTED }};">unavailable</span>{% endif %} {{ kind("estimated") }}<br>
+          Прогноз на Black Friday: {% if d.prediction.black_friday_price %}<b>{{ money(d.prediction.black_friday_price, d.prediction.currency) }}</b>{% else %}<span style="color:{{ C_MUTED }};">н/д</span>{% endif %} {{ kind("прогноз · надёжность " ~ CONF(d.prediction.confidence)) }}<br>
+          Прогноз на Cyber Monday: {% if d.prediction.cyber_monday_price %}{{ money(d.prediction.cyber_monday_price, d.prediction.currency) }}{% else %}<span style="color:{{ C_MUTED }};">н/д</span>{% endif %}<br>
+          Совет: <b>{{ ADV(d.prediction.advice) }}</b><br>
+          С доставкой в Ереван: {% if d.best.delivery.total_usd is not none %}{% set ge = "" if d.best.delivery.complete else "≥ " %}<b>{{ ge }}{{ money(d.best.delivery.total_usd, "USD") }}</b> / {{ ge }}{{ amd(d.best.delivery.total_amd) }}{% if not d.best.delivery.complete %} <span style="color:#b45309;">(часть расходов неизвестна)</span>{% endif %}{% else %}<span style="color:{{ C_MUTED }};">нет данных</span>{% endif %} {{ kind("estimated") }}<br>
           <span style="font-size:12px;color:{{ C_MUTED }};">{{ d.best.delivery.route }}</span>
         </td>
       </tr>
     </table>
     {% if not compact %}
     <div style="font-size:12px;color:{{ C_MUTED }};margin-top:6px;line-height:1.5;">
-      {% for line in d.best.delivery.lines %}{{ line.label }}: {% if line.amount_usd is not none %}{{ money(line.amount_usd, "USD") }}{% else %}unavailable{% endif %}{% if line.note %} ({{ line.note }}){% endif %}{{ " · " if not loop.last }}{% endfor %}
+      {% for line in d.best.delivery.lines %}{{ line.label }}: {% if line.amount_usd is not none %}{{ money(line.amount_usd, "USD") }}{% else %}нет данных{% endif %}{% if line.note %} ({{ line.note }}){% endif %}{{ " · " if not loop.last }}{% endfor %}
       {% if d.best.delivery.warnings %}<br>⚠ {{ d.best.delivery.warnings | join("; ") }}{% endif %}
     </div>
     {% endif %}
-    {% if d.alert_reasons %}<div style="font-size:13px;margin-top:8px;color:#b91c1c;"><b>Alert:</b> {{ d.alert_reasons | join("; ") }}</div>{% endif %}
-    <div style="font-size:13px;margin-top:8px;"><b>Why:</b> {{ d.explanation }}</div>
+    {% if d.alert_reasons %}<div style="font-size:13px;margin-top:8px;color:#b91c1c;"><b>Оповещение:</b> {{ d.alert_reasons | join("; ") }}</div>{% endif %}
+    <div style="font-size:13px;margin-top:8px;"><b>Почему:</b> {{ d.explanation }}</div>
     {% if d.others and not compact %}
-    <div style="font-size:12px;color:{{ C_MUTED }};margin-top:4px;">Also at:
-      {% for o in d.others[:4] %}<a href="{{ o.listing.url }}" style="color:{{ C_MUTED }};">{{ o.listing.retailer }} {{ money(o.listing.last_price, o.listing.currency) }}{% if o.delivery.total_usd is not none %} ({{ "≈" if o.delivery.complete else "≥" }}{{ money(o.delivery.total_usd, "USD") }} delivered){% endif %}</a>{{ ", " if not loop.last }}{% endfor %}
+    <div style="font-size:12px;color:{{ C_MUTED }};margin-top:4px;">Также в:
+      {% for o in d.others[:4] %}<a href="{{ o.listing.url }}" style="color:{{ C_MUTED }};">{{ o.listing.retailer }} {{ money(o.listing.last_price, o.listing.currency) }}{% if o.delivery.total_usd is not none %} ({{ "≈" if o.delivery.complete else "≥" }}{{ money(o.delivery.total_usd, "USD") }} с доставкой){% endif %}</a>{{ ", " if not loop.last }}{% endfor %}
     </div>
     {% endif %}
     <div style="font-size:11px;color:{{ C_MUTED }};margin-top:6px;">
-      Score: history {{ d.score.history }} · discount {{ d.score.discount }} · prediction {{ d.score.prediction }} · delivered {{ d.score.delivered_cost }} · reliability {{ d.score.reliability }}
-      · last checked {{ local_time(l.last_seen) }}
+      Баллы: история {{ d.score.history }} · скидка {{ d.score.discount }} · прогноз {{ d.score.prediction }} · доставка {{ d.score.delivered_cost }} · надёжность {{ d.score.reliability }}
+      · проверено {{ local_time(l.last_seen) }}
     </div>
-    <div style="margin-top:8px;"><a href="{{ l.url }}" style="display:inline-block;background:{{ C_ACCENT }};color:#fff;text-decoration:none;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:700;">Open deal →</a></div>
+    <div style="margin-top:8px;"><a href="{{ l.url }}" style="display:inline-block;background:{{ C_ACCENT }};color:#fff;text-decoration:none;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:700;">Открыть сделку →</a></div>
   </td>
 </tr>
 </table>
@@ -113,11 +113,11 @@
   <!-- header -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111827;border-radius:12px;color:#fff;">
     <tr><td style="padding:18px 18px 14px 18px;">
-      <div style="font-size:12px;opacity:.75;letter-spacing:1px;">BLACK FRIDAY DEAL HUNTER 2026 · YEREVAN</div>
+      <div style="font-size:12px;opacity:.75;letter-spacing:1px;">BLACK FRIDAY DEAL HUNTER 2026 · ЕРЕВАН</div>
       <div style="font-size:22px;font-weight:800;margin-top:4px;">{{ headline }}</div>
       <div style="font-size:13px;opacity:.85;margin-top:6px;">{{ generated_local }} · {{ countdown }}</div>
       <div style="font-size:12px;opacity:.75;margin-top:8px;">
-        {{ deals_count }} deals ranked from {{ offers_count }} offers · {{ new_count }} new · rates: {{ fx_label }}
+        Оценено сделок: {{ deals_count }} из {{ offers_count }} предложений · новых: {{ new_count }} · курс: {{ fx_label }}
       </div>
     </td></tr>
   </table>
@@ -131,13 +131,13 @@
   {% endif %}
 
   {% if sections.alerts %}
-  {{ section("🚨 IMPORTANT ALERTS", "Very good scores, your priority items, record lows in our own history, or your target prices — not alerted before at this price.") }}
+  {{ section("🚨 ВАЖНЫЕ ОПОВЕЩЕНИЯ", "Очень высокий балл, ваши приоритетные товары, рекордно низкая цена в нашей истории или ваша целевая цена — по этой цене ещё не оповещали.") }}
   {% for d in sections.alerts %}{{ deal_card(d, compact=alert_only == false) }}{% endfor %}
   {% endif %}
 
   {% if not alert_only %}
   {% if sections.priorities %}
-  {{ section("🎯 YOUR PRIORITIES", "Best current offers for the things you want most, in your order. Edit config/watchlist.json to change.") }}
+  {{ section("🎯 ВАШИ ПРИОРИТЕТЫ", "Лучшие текущие предложения на то, что вам нужнее всего, в вашем порядке. Изменить: config/watchlist.json.") }}
   {% for tier in sections.priorities %}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;margin-bottom:10px;">
     <tr><td style="padding:9px 12px;background:#f9fafb;border-bottom:1px solid {{ C_LINE }};border-radius:10px 10px 0 0;"><b>{{ tier.tier }}. {{ tier.label }}</b></td></tr>
@@ -152,40 +152,40 @@
           — <b>{{ money(d.best.listing.last_price, d.best.listing.currency) }}</b>{% if d.best.listing.currency != "USD" %} (≈{{ money(d.best.price_usd, "USD") }}){% endif %}
           · {{ d.best.listing.retailer }}
           {% if d.best.delivery.total_usd is not none %}· 📦 {{ "≈" if d.best.delivery.complete else "≥" }}{{ money(d.best.delivery.total_usd, "USD") }}{% endif %}
-          {% if d.best.delivery.duty_eur %}<span style="color:#b45309;">(customs ≈€{{ "%.0f" % d.best.delivery.duty_eur }})</span>{% endif %}
-          {% if d.status != "SEEN BEFORE" %}<span style="color:{{ STATUS_COLORS.get(d.status) }};font-weight:700;font-size:11px;">{{ d.status }}</span>{% endif %}
+          {% if d.best.delivery.duty_eur %}<span style="color:#b45309;">(пошлина ≈€{{ "%.0f" % d.best.delivery.duty_eur }})</span>{% endif %}
+          {% if d.status != "SEEN BEFORE" %}<span style="color:{{ STATUS_COLORS.get(d.status) }};font-weight:700;font-size:11px;">{{ ST(d.status) }}</span>{% endif %}
         </div>
         {% endfor %}
-      {% else %}<span style="color:{{ C_MUTED }};">no offers right now</span>{% endif %}
+      {% else %}<span style="color:{{ C_MUTED }};">сейчас предложений нет</span>{% endif %}
     </td></tr>
     {% endfor %}
   </table>
   {% endfor %}
   {% endif %}
 
-  {{ section("TOP " ~ sections.top|length ~ " BEST DEALS", "Ranked by deal score (0–100). One entry per product: the cheapest trustworthy offer delivered to Yerevan.") }}
+  {{ section("ТОП-" ~ sections.top|length ~ " ЛУЧШИХ СДЕЛОК", "По баллу сделки (0–100). Один товар — одна строка: самое дешёвое надёжное предложение с доставкой в Ереван.") }}
   {% if sections.top %}
     {% for d in sections.top %}{{ deal_card(d, rank=loop.index) }}{% endfor %}
   {% else %}
-    <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:14px;">No qualifying deals in the last {{ ttl_hours }} hours.</div>
+    <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:14px;">За последние {{ ttl_hours }} ч подходящих сделок нет.</div>
   {% endif %}
 
-  {{ section("⚡ BEST NEW OPPORTUNITIES", "Strongest offers that are new (or dropped in price) since the last email.") }}
+  {{ section("⚡ ЛУЧШИЕ НОВЫЕ ПРЕДЛОЖЕНИЯ", "Самые сильные предложения, появившиеся (или подешевевшие) после прошлого письма.") }}
   {% if sections.opportunities %}
     {% for d in sections.opportunities %}{{ deal_card(d, compact=True) }}{% endfor %}
   {% else %}
-    <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No new qualifying offers since the last email — the lists above and below are the latest available.</div>
+    <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">После прошлого письма новых подходящих предложений нет — списки выше и ниже содержат самые свежие данные.</div>
   {% endif %}
 
   {% if sections.parcel %}
-  {{ section("📦 CUSTOMS €" ~ ("%.0f" % sections.parcel.limit_eur) ~ " PLANNER", "Duty-free status of your priority items and the top deals. Value = product price + shipping to the forwarder.") }}
+  {{ section("📦 ПЛАНИРОВЩИК ТАМОЖНИ €" ~ ("%.0f" % sections.parcel.limit_eur), "Пройдут ли ваши приоритетные товары и лучшие сделки без пошлины. Стоимость = цена товара + доставка до склада форвардера.") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
     {% for r in sections.parcel.rows %}
     <tr><td style="padding:7px 12px;border-bottom:1px solid {{ C_LINE }};line-height:1.45;">
       {% if r.duty_free %}✅{% else %}⚠️{% endif %}
-      <a href="{{ r.deal.best.listing.url }}" style="color:{{ C_TEXT }};">{{ r.deal.best.listing.title | truncate(70) }}</a> — value €{{ "%.0f" % r.value_eur }}
-      {% if r.duty_free %}<span style="color:#0f766e;">duty-free — order it as its own parcel</span>
-      {% else %}<span style="color:#b45309;">customs ≈€{{ "%.0f" % r.duty_eur }}</span>{% if r.max_duty_free_price and r.max_duty_free_price > 0 %} <span style="color:{{ C_MUTED }};">(duty-free if the price falls to ≤{{ money(r.max_duty_free_price, r.currency) }})</span>{% endif %}{% endif %}
+      <a href="{{ r.deal.best.listing.url }}" style="color:{{ C_TEXT }};">{{ r.deal.best.listing.title | truncate(70) }}</a> — стоимость €{{ "%.0f" % r.value_eur }}
+      {% if r.duty_free %}<span style="color:#0f766e;">без пошлины — заказывайте отдельной посылкой</span>
+      {% else %}<span style="color:#b45309;">пошлина ≈€{{ "%.0f" % r.duty_eur }}</span>{% if r.max_duty_free_price and r.max_duty_free_price > 0 %} <span style="color:{{ C_MUTED }};">(без пошлины, если цена упадёт до ≤{{ money(r.max_duty_free_price, r.currency) }})</span>{% endif %}{% endif %}
     </td></tr>
     {% endfor %}
     {% for t in sections.parcel.tips %}
@@ -195,77 +195,77 @@
   {% endif %}
 
   {% if watchlist %}
-  {{ section("👀 WATCHLIST") }}
+  {{ section("👀 СПИСОК ЖЕЛАНИЙ") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
     {% for w, d in watchlist %}
     <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};">
-      <b>{{ w.name }}</b> <span style="color:{{ C_MUTED }};">target {% if w.target_price_usd %}{{ money(w.target_price_usd, "USD") }}{% endif %}{% if w.target_delivered_usd %} / delivered {{ money(w.target_delivered_usd, "USD") }}{% endif %}</span><br>
-      {% if d %}Best now: <a href="{{ d.best.listing.url }}">{{ d.best.listing.title }}</a> — {{ money(d.best.listing.last_price, d.best.listing.currency) }} (≈{{ money(d.best.price_usd, "USD") }}) at {{ d.best.listing.retailer }}{% if d.watch_hit %} <b style="color:#db2777;">TARGET HIT</b>{% endif %}
-      {% else %}<span style="color:{{ C_MUTED }};">No matching offer in the last {{ ttl_hours }} hours.</span>{% endif %}
+      <b>{{ w.name }}</b> <span style="color:{{ C_MUTED }};">цель {% if w.target_price_usd %}{{ money(w.target_price_usd, "USD") }}{% endif %}{% if w.target_delivered_usd %} / с доставкой {{ money(w.target_delivered_usd, "USD") }}{% endif %}</span><br>
+      {% if d %}Лучшее сейчас: <a href="{{ d.best.listing.url }}">{{ d.best.listing.title }}</a> — {{ money(d.best.listing.last_price, d.best.listing.currency) }} (≈{{ money(d.best.price_usd, "USD") }}) в {{ d.best.listing.retailer }}{% if d.watch_hit %} <b style="color:#db2777;">ЦЕЛЬ ДОСТИГНУТА</b>{% endif %}
+      {% else %}<span style="color:{{ C_MUTED }};">За последние {{ ttl_hours }} ч подходящих предложений нет.</span>{% endif %}
     </td></tr>
     {% endfor %}
   </table>
   {% endif %}
 
   {% if sections.ads and not alert_only %}
-  {{ section("🗞 BLACK FRIDAY & CYBER MONDAY ADS", "US store ad scans (blackfriday.com). Ad prices are ADVERTISED — some start only on the sale day. Open “full ad” to see every page.") }}
+  {{ section("🗞 РЕКЛАМНЫЕ КАТАЛОГИ BLACK FRIDAY И CYBER MONDAY", "Каталоги магазинов США (blackfriday.com). Цены рекламные — часть действует только в день распродажи. «Весь каталог» — все страницы.") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
     {% for g in sections.ads %}
     <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};line-height:1.5;">
-      <b>{{ g.store }}</b> <span style="color:{{ C_MUTED }};">{{ g.event_label }}</span> · <a href="{{ g.url }}">full ad →</a>
+      <b>{{ g.store }}</b> <span style="color:{{ C_MUTED }};">{{ g.event_label }}</span> · <a href="{{ g.url }}">весь каталог →</a>
       {% for d, o in g.items %}
-      <br>• <a href="{{ o.listing.url }}" style="color:{{ C_TEXT }};">{{ o.listing.title | truncate(70) }}</a> — <b>{{ money(o.listing.last_price, o.listing.currency) }}</b>{% if o.delivery.total_usd is not none %} <span style="color:{{ C_MUTED }};">({{ "≈" if o.delivery.complete else "≥" }}{{ money(o.delivery.total_usd, "USD") }} in Yerevan)</span>{% endif %} <span style="color:{{ C_MUTED }};">{{ "%.0f" % d.total }}/100</span>
+      <br>• <a href="{{ o.listing.url }}" style="color:{{ C_TEXT }};">{{ o.listing.title | truncate(70) }}</a> — <b>{{ money(o.listing.last_price, o.listing.currency) }}</b>{% if o.delivery.total_usd is not none %} <span style="color:{{ C_MUTED }};">({{ "≈" if o.delivery.complete else "≥" }}{{ money(o.delivery.total_usd, "USD") }} в Ереване)</span>{% endif %} <span style="color:{{ C_MUTED }};">{{ "%.0f" % d.total }}/100</span>
       {% endfor %}
     </td></tr>
     {% endfor %}
   </table>
   {% endif %}
 
-  {{ section("📂 CATEGORY SUMMARY", "Best deals in every category. ★ = your focus categories (more deals shown; edit email.focus_categories in config/settings.yaml).") }}
+  {{ section("📂 ПО КАТЕГОРИЯМ", "Лучшие сделки в каждой категории. ★ — ваши главные категории (показано больше; настройка email.focus_categories в config/settings.yaml).") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
     {% for key, label in category_labels.items() %}
     {% set lst = sections.by_category.get(key, []) %}
     <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};">
       <b>{{ label }}</b><br>
-      {% if lst %}{% for d in lst %}<a href="{{ d.best.listing.url }}" style="color:{{ C_TEXT }};">{{ d.best.listing.title | truncate(80) }}</a> — {{ money(d.best.listing.last_price, d.best.listing.currency) }} · <span style="color:{{ LABEL_COLORS.get(d.label) }};font-weight:700;">{{ "%.0f" % d.total }}</span> · {{ d.best.listing.retailer }}{% if d.best.delivery.total_usd is not none %} · {{ "≈" if d.best.delivery.complete else "≥" }}{{ money(d.best.delivery.total_usd, "USD") }} delivered{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
-      {% else %}<span style="color:{{ C_MUTED }};">no offers right now</span>{% endif %}
+      {% if lst %}{% for d in lst %}<a href="{{ d.best.listing.url }}" style="color:{{ C_TEXT }};">{{ d.best.listing.title | truncate(80) }}</a> — {{ money(d.best.listing.last_price, d.best.listing.currency) }} · <span style="color:{{ LABEL_COLORS.get(d.label) }};font-weight:700;">{{ "%.0f" % d.total }}</span> · {{ d.best.listing.retailer }}{% if d.best.delivery.total_usd is not none %} · {{ "≈" if d.best.delivery.complete else "≥" }}{{ money(d.best.delivery.total_usd, "USD") }} с доставкой{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
+      {% else %}<span style="color:{{ C_MUTED }};">сейчас предложений нет</span>{% endif %}
     </td></tr>
     {% endfor %}
   </table>
 
-  {{ section("📉 PRICE PREDICTIONS — WORTH WAITING", "Prices that may still fall before Black Friday / Cyber Monday. WAIT = backed by our own history; MAYBE WAIT = category heuristic only (low confidence).") }}
+  {{ section("📉 ПРОГНОЗ ЦЕН — СТОИТ ПОДОЖДАТЬ", "Цены, которые ещё могут упасть до Black Friday / Cyber Monday. ЖДАТЬ — по нашей истории цен; ВОЗМОЖНО, ЖДАТЬ — только по типичному поведению категории (низкая надёжность).") }}
   {% if sections.waiting %}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:13px;">
     {% for d in sections.waiting %}
     <tr><td style="padding:9px 12px;border-bottom:1px solid {{ C_LINE }};">
       <a href="{{ d.best.listing.url }}" style="color:{{ C_TEXT }};font-weight:700;">{{ d.best.listing.title | truncate(90) }}</a><br>
-      now {{ money(d.best.listing.last_price, d.best.listing.currency) }} → BF {{ opt_money(d.prediction.black_friday_price, d.prediction.currency) }} / CM {{ opt_money(d.prediction.cyber_monday_price, d.prediction.currency) }}
-      · <b>{{ d.prediction.advice }}</b> · {{ d.prediction.confidence }} confidence <span style="color:{{ C_MUTED }};">({{ d.prediction.method }})</span>
+      сейчас {{ money(d.best.listing.last_price, d.best.listing.currency) }} → BF {{ opt_money(d.prediction.black_friday_price, d.prediction.currency) }} / CM {{ opt_money(d.prediction.cyber_monday_price, d.prediction.currency) }}
+      · <b>{{ ADV(d.prediction.advice) }}</b> · надёжность {{ CONF(d.prediction.confidence) }} <span style="color:{{ C_MUTED }};">({{ d.prediction.method }})</span>
     </td></tr>
     {% endfor %}
   </table>
   {% else %}
-  <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">No products currently look worth waiting for.</div>
+  <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid {{ C_LINE }};font-size:13px;color:{{ C_MUTED }};">Сейчас нет товаров, которые стоит ждать.</div>
   {% endif %}
 
   {% endif %}{# not alert_only #}
 
   {% if not alert_only %}
-  {{ section("ℹ SOURCES & DATA QUALITY") }}
+  {{ section("ℹ ИСТОЧНИКИ И КАЧЕСТВО ДАННЫХ") }}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {{ C_LINE }};border-radius:10px;font-size:12px;">
     {% for st in statuses %}
     <tr><td style="padding:6px 12px;border-bottom:1px solid {{ C_LINE }};">
-      {% if st.ok and not st.note %}✅{% elif st.ok %}⏸{% else %}❌{% endif %} <b>{{ source_label(st.source) }}</b> — {% if st.ok %}{{ st.offers }} offers{% if st.skipped %}, {{ st.skipped }} skipped (non-products/invalid){% endif %}{% if st.note %} · {{ st.note }}{% endif %}{% else %}failed: {{ st.error }}{% endif %}
+      {% if st.ok and not st.note %}✅{% elif st.ok %}⏸{% else %}❌{% endif %} <b>{{ source_label(st.source) }}</b> — {% if st.ok %}предложений: {{ st.offers }}{% if st.skipped %}, пропущено: {{ st.skipped }} (не товары/неполные){% endif %}{% if st.note %} · {{ st.note }}{% endif %}{% else %}ошибка: {{ st.error }}{% endif %}
     </td></tr>
     {% endfor %}
   </table>
   {% endif %}
   <div style="font-size:11px;color:{{ C_MUTED }};line-height:1.6;margin:12px 4px;">
-    {% if alert_only %}This is an instant alert. The full report comes with the next 4-hourly email.<br>{% endif %}
-    <b>Labels:</b> CONFIRMED = price from the retailer's own API/page · ADVERTISED = price from a deal post (community or editor) · ESTIMATED = computed from configured rates/assumptions · PREDICTED = forecast · UNVERIFIED = could not be checked.
-    Historical prices are only the prices this app has recorded itself; nothing is back-filled. Customs: {{ customs_label }}.
-    Links go to the deal page (mydealz/hotukdeals/dealnews) or the shop. Always confirm the final price at checkout.<br>
-    Report generated {{ generated_local }} · run #{{ run_id }}{% if last_email %} · previous email {{ last_email }}{% endif %}.
+    {% if alert_only %}Это срочное оповещение. Полный отчёт придёт со следующим письмом (раз в 4 часа).<br>{% endif %}
+    <b>Метки:</b> ПОДТВЕРЖДЕНО — цена из API/страницы магазина · РЕКЛАМНАЯ — цена из публикации о скидке (сообщество или редакция) · ОЦЕНКА — расчёт по заданным тарифам и допущениям · ПРОГНОЗ · НЕ ПРОВЕРЕНО — проверить не удалось.
+    История цен — только цены, которые записало само приложение; ничего не досочинено. Таможня: {{ customs_label }}.
+    Ссылки ведут на страницу сделки (dealnews и др.) или в магазин. Окончательную цену всегда проверяйте при оформлении заказа.<br>
+    Отчёт создан {{ generated_local }} · запуск №{{ run_id }}{% if last_email %} · прошлое письмо {{ last_email }}{% endif %}.
   </div>
 
 </td></tr>

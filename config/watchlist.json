@@ -30,7 +30,7 @@
       "urls": []
     },
     {
-      "name": "PlayStation games",
+      "name": "Игры PlayStation",
       "priority": 1,
       "keywords": ["PS5", "PlayStation 5", "PS4", "PlayStation 4"],
       "exclude": ["konsole", "console", "slim", "digital edition", "825gb", "1tb", "2tb", "controller", "dualsense", "dualshock", "headset", "portal", "hülle", "case", "cover", "skin", "stand", "ladestation", "charging", "ssd", "festplatte", "gift card", "guthaben", "psn card", "playstation plus", "ps plus", "vr2", "camera", "kamera"],
@@ -63,7 +63,7 @@
       "urls": []
     },
     {
-      "name": "Android tablets",
+      "name": "Планшеты Android",
       "priority": 2,
       "keywords": ["Galaxy Tab", "Xiaomi Pad", "Redmi Pad", "OnePlus Pad", "Lenovo Tab", "Honor Pad", "MagicPad", "Pixel Tablet", "Tablet"],
       "exclude": ["case", "hülle", "cover", "folie", "protector", "stift", "stylus", "keyboard", "tastatur", "stand", "halterung", "holder", "kids", "kinder", "graphics tablet", "drawing tablet", "ipad"],
@@ -71,7 +71,7 @@
       "urls": []
     },
     {
-      "name": "AirPods & headphones",
+      "name": "AirPods и наушники",
       "priority": 2,
       "keywords": ["AirPods", "AirPods Pro", "AirPods Max", "WH-1000XM5", "WH-1000XM6", "WF-1000XM5", "Bose QuietComfort", "Galaxy Buds", "Sennheiser Momentum"],
       "exclude": ["case", "hülle", "cover", "ear tips", "aufsätze", "replacement", "ersatz", "charging case only"],
@@ -79,7 +79,7 @@
       "urls": []
     },
     {
-      "name": "Apple Watch & smartwatches",
+      "name": "Apple Watch и умные часы",
       "priority": 2,
       "keywords": ["Apple Watch", "Galaxy Watch", "Pixel Watch", "Garmin Forerunner", "Garmin Fenix"],
       "exclude": ["band", "armband", "strap", "case", "hülle", "folie", "protector", "charger", "ladegerät", "ladekabel"],
@@ -87,7 +87,7 @@
       "urls": []
     },
     {
-      "name": "Kindle & e-readers",
+      "name": "Kindle и электронные книги",
       "priority": 2,
       "keywords": ["Kindle", "Kindle Paperwhite", "Kobo"],
       "exclude": ["case", "hülle", "cover", "kindle unlimited", "ebook", "e-book"],

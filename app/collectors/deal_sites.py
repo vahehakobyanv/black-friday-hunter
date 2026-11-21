@@ -176,11 +176,19 @@ RETAILER_HOSTS = [
 ]
 
 
-def retailer_from_links(body_html: str) -> str | None:
-    for host in re.findall(r'href="https?://([^/"]+)', body_html or "")[:4]:
-        host = host.lower()
-        if host.endswith("9to5toys.com"):
-            continue
+_CONTENT = "{http://purl.org/rss/1.0/modules/content/}encoded"
+
+
+def retailer_from_title(title: str) -> str | None:
+    """'... on Amazon', '... at Best Buy' in the headline."""
+    m = re.search(r"\b(?:at|on|from|via)\s+(Amazon|Best Buy|Walmart|Target|Newegg|Costco|Woot|B&H)\b", title)
+    return {"B&H": "B&H Photo"}.get(m.group(1), m.group(1)) if m else None
+
+
+def retailer_from_links(body_html: str, skip_host: str = "9to5toys.com") -> str | None:
+    hosts = [h.lower() for h in re.findall(r'href="https?://([^/"]+)', body_html or "")]
+    own = (skip_host or "9to5toys.com").lower().removeprefix("www.")
+    for host in [h for h in hosts if not h.endswith(own) and not h.endswith("9to5toys.com")][:4]:
         for keys, name in RETAILER_HOSTS:
             if any(k in host for k in keys):
                 return name
@@ -216,8 +224,9 @@ class EditorialRssCollector(_FeedCollector):
         if not parsed:
             return None
         product, price, off = parsed
-        body = it.findtext("description") or ""
-        retailer = retailer_from_links(body)
+        body = (it.findtext("description") or "") + (it.findtext(_CONTENT) or "")
+        retailer = retailer_from_links(body, skip_host=urlsplit(it.findtext("link") or "").netloc) \
+            or retailer_from_title(title)
         if retailer is None:
             return None  # unknown shop: we could not estimate delivery honestly
         cat = categorize(product, None, ctx.cfg.categories, hint)

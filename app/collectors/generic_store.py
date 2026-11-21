@@ -54,7 +54,7 @@ class GenericStoreCollector(Collector):
 
     def available(self, ctx: CollectContext) -> tuple[bool, str | None]:
         if not any(w.urls for w in ctx.cfg.watchlist.watchlist):
-            return False, "no product URLs in watchlist.json"
+            return False, "в watchlist.json нет ссылок на товары"
         return True, None
 
     def collect(self, ctx: CollectContext) -> tuple[list[RawOffer], int]:

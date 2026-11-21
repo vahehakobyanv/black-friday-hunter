@@ -7,6 +7,8 @@ estimates the **delivered-to-Yerevan** cost, scores every deal from 0 to 100, an
 HTML report every 4 hours (no emails 00:00–08:00 Yerevan time; prices are still collected hourly).
 
 - **Black Friday 2026:** 27 November · **Cyber Monday:** 30 November. After that it keeps tracking ongoing discounts.
+- **Language:** email and Telegram are in Russian (product names stay as the shop writes them).
+- **Region:** USA shops only (since 22 Nov 2026). The German/UK collectors stay in the code, disabled in `config/stores.yaml`.
 - **Cost:** €0. GitHub Actions (public repo) + Gmail. No VPS, no paid database, no paid AI.
 
 > Honesty rules built into the code: no invented prices, history, weights or shipping rates.
@@ -49,12 +51,13 @@ already cover those shops:
 | dealnews store feeds | US | every deal editors found at Amazon, Walmart, Best Buy, Costco, Newegg, Woot, Lenovo, Dell, Samsung, Apple, Home Depot, eBay | those shops |
 | DealCatcher RSS | US | one product per item with price (mostly Amazon, also Walmart, Home Depot, Macy's) | Amazon … |
 | 9to5Toys RSS | US | editor-written deals; only single-product headlines with one clear price, "was" price from "($X off)" | Amazon, Best Buy … |
+| Android Police / Tom's Guide / Wccftech RSS | US | editor-written deals, same strict single-product rule as 9to5Toys | Amazon, Best Buy … |
 | BlackFriday.com ad pages | US | Black Friday / Cyber Monday ad scans: products and advertised prices (schema.org list) + link to the full ad in the email | Walmart, Target, Best Buy, Amazon, Costco, Newegg, Dell, Sam's Club, Home Depot, Kohl's, Macy's, Lowe's |
 | Best Buy Products API | US | **confirmed** price, regular price, UPC, weight | Best Buy (free key) |
 | eBay Browse API | US | **confirmed** prices for your watchlist keywords | eBay (free key) |
 | Watchlist URLs | any | schema.org product data | only sites whose robots.txt allows it |
 
-Checked and **not used**: Slickdeals, Reddit, Ben's Bargains, TechBargains, DealSea (block bots → 403/429), Keepa (paid), Amazon
+Checked and **not used**: Slickdeals, Reddit, Ben's Bargains, TechBargains, DealSea, Wirecutter, CheapAssGamer, Offers.com, Kinja Deals (block bots → 403/429); Android Authority (robots.txt forbids its feeds), Keepa (paid), Amazon
 Creators API (needs an affiliate account with sales), Walmart/AliExpress affiliate APIs (approval).
 
 ### Scoring (config/settings.yaml → `scoring`)
@@ -107,7 +110,7 @@ Repository → **Settings → Secrets and variables → Actions → New reposito
 `GITHUB_TOKEN` is provided automatically by GitHub — do not create it.
 
 ### 3. First run
-Actions tab → **Hourly deals** → **Run workflow**. Then check:
+Actions tab → **Hourly deals** → **Run workflow** (tick *force_email* to get the email and Telegram summary right away, even at night). Then check:
 - the run is green and the log shows `state: saved database to branch 'data'`;
 - a `data` branch exists containing `deals.db.gz`;
 - the email arrived (check Spam the first time and mark "Not spam");

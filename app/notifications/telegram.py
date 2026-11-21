@@ -36,18 +36,20 @@ def deal_line(d: DealView, with_reasons: bool = False) -> str:
     dl = d.best.delivery
     delivered = ""
     if dl.total_usd is not None:
-        delivered = f"\n   📦 Yerevan: {'≈' if dl.complete else '≥'}{_money(dl.total_usd, 'USD')}"
+        delivered = f"\n   📦 В Ереване: {'≈' if dl.complete else '≥'}{_money(dl.total_usd, 'USD')}"
         if dl.duty_eur:
-            delivered += f" (incl. customs ≈€{dl.duty_eur:.0f})"
+            delivered += f" (вкл. пошлину ≈€{dl.duty_eur:.0f})"
         elif dl.duty_eur == 0:
-            delivered += " · duty-free"
+            delivered += " · без пошлины"
     reasons = f"\n   ⭐ {e('; '.join(d.alert_reasons))}" if with_reasons and d.alert_reasons else ""
-    return (f"<b>{e(l.title[:110])}</b>\n   {price}{usd} at {e(l.retailer)} · {d.label} {d.total:.0f}/100"
-            f"{delivered}{reasons}\n   <a href=\"{e(l.url, quote=True)}\">Open deal</a>")
+    from app.notifications.report import LABELS_RU
+
+    return (f"<b>{e(l.title[:110])}</b>\n   {price}{usd} в {e(l.retailer)} · {LABELS_RU.get(d.label, d.label)} {d.total:.0f}/100"
+            f"{delivered}{reasons}\n   <a href=\"{e(l.url, quote=True)}\">Открыть сделку</a>")
 
 
 def format_alerts(alerts: list[DealView], when: str) -> str:
-    lines = [f"🔥 <b>Deal alert</b> · {html.escape(when)}"]
+    lines = [f"🔥 <b>Срочно: выгодная сделка</b> · {html.escape(when)}"]
     lines += [f"\n{i}. {deal_line(d, with_reasons=True)}" for i, d in enumerate(alerts, 1)]
     return "\n".join(lines)
 
@@ -60,9 +62,9 @@ def format_summary(sections: ReportSections, subject: str, n: int) -> str:
             lines.append(f"\n<b>{html.escape(tier.label)}</b>")
             lines += [f"• {deal_line(d)}" for d in best[:4]]
     if sections.top:
-        lines.append("\n<b>Top deals</b>")
+        lines.append("\n<b>Лучшие сделки</b>")
         lines += [f"{i}. {deal_line(d)}" for i, d in enumerate(sections.top[:n], 1)]
-    lines.append("\nFull report with images and predictions is in your email.")
+    lines.append("\nПолный отчёт с фото и прогнозами — в вашей почте.")
     return "\n".join(lines)
 
 

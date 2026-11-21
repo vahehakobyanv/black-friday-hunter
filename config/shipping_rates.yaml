@@ -48,7 +48,7 @@ customs:
 # otherwise actual (or estimated) weight only — this is flagged in the report.
 forwarders:
   - id: onex_us
-    name: "Onex (USA warehouse)"
+    name: "Onex (склад в США)"
     origin: US
     rate_per_kg: 6000
     rate_currency: AMD
@@ -62,7 +62,7 @@ forwarders:
     verified: true
     source: "6000 AMD/kg confirmed by user 2026-11-19 (also listed on https://onex.am/en/pages/2)"
   - id: onex_de
-    name: "Onex (Germany warehouse)"
+    name: "Onex (склад в Германии)"
     origin: DE
     rate_per_kg: 6000
     rate_currency: AMD
@@ -75,7 +75,7 @@ forwarders:
     verified: true
     source: "6000 AMD/kg, same as USA — confirmed by user 2026-11-19"
   - id: onex_uk
-    name: "Onex (UK warehouse)"
+    name: "Onex (склад в Великобритании)"
     origin: UK
     rate_per_kg: 6000
     rate_currency: AMD

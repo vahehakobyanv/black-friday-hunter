@@ -78,7 +78,7 @@ def test_new_collectors_on_recorded_feeds(cfg):
 def test_ads_section_in_report(cfg, now, tmp_path):
     out = run_once(cfg, send=False, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
     html = out.report_path.read_text()
-    assert "BLACK FRIDAY &amp; CYBER MONDAY ADS" in html
+    assert "РЕКЛАМНЫЕ КАТАЛОГИ BLACK FRIDAY" in html
     assert "https://blackfriday.com/ads/black-friday/walmart" in html
 
 

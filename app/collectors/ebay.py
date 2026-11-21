@@ -27,7 +27,7 @@ class EbayCollector(Collector):
     def available(self, ctx: CollectContext) -> tuple[bool, str | None]:
         s = ctx.cfg.secrets
         if not (s.ebay_client_id and s.ebay_client_secret):
-            return False, "EBAY_CLIENT_ID / EBAY_CLIENT_SECRET not set"
+            return False, "не заданы ключи EBAY_CLIENT_ID / EBAY_CLIENT_SECRET"
         if not ctx.cfg.watchlist.watchlist:
             return False, "watchlist is empty"
         return True, None

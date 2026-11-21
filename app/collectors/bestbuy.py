@@ -51,7 +51,7 @@ class BestBuyCollector(Collector):
 
     def available(self, ctx: CollectContext) -> tuple[bool, str | None]:
         if not ctx.cfg.secrets.bestbuy_api_key:
-            return False, "BESTBUY_API_KEY not set"
+            return False, "не задан ключ BESTBUY_API_KEY"
         return True, None
 
     def collect(self, ctx: CollectContext) -> tuple[list[RawOffer], int]:

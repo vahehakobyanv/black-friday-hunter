@@ -123,7 +123,7 @@ def test_own_history_record_low_scores_high(cfg):
     st = HistoryStats(currency="EUR", avg_30d=100, avg_90d=100, prior_lowest=90, lowest=70, distinct_days=40)
     sb, disc = score_deal(_inp(stats=st), cfg.settings.scoring)
     assert sb.history == 30
-    assert disc.basis.startswith("own")
+    assert disc.basis.startswith("нашей средней")
     assert "record low in own history" in sb.notes
 
 

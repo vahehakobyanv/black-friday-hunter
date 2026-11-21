@@ -54,7 +54,7 @@ class Collector(ABC):
         started = time.monotonic()
         ok, reason = self.available(ctx)
         if not ok:
-            return CollectResult([], CollectorStatus(source=self.id, ok=True, note=f"skipped: {reason}"))
+            return CollectResult([], CollectorStatus(source=self.id, ok=True, note=f"пропущено: {reason}"))
         try:
             offers, skipped = self.collect(ctx)
         except Exception as exc:  # one failing source must never stop the run

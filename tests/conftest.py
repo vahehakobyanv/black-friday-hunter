@@ -21,6 +21,8 @@ def cfg(tmp_path, monkeypatch):
     monkeypatch.setenv("BF_DB_PATH", str(tmp_path / "test.db"))
     c = load_config(secrets=Secrets())
     c.settings.collection.per_host_delay_seconds = 0
+    for src in c.stores.sources:   # DE/UK are off in production (USA only) but their collectors stay tested
+        src.enabled = True
     return c
 
 
@@ -55,7 +57,7 @@ def make_transport(fail_hosts: set[str] | None = None, blocked_hosts: set[str] |
             return httpx.Response(200, text=fixture_text("hotukdeals_hot.xml"), headers={"content-type": "text/xml"})
         if "dealcatcher.com/rss" in url:
             return httpx.Response(200, text=fixture_text("dealcatcher.xml"), headers={"content-type": "text/xml"})
-        if "9to5toys.com" in url:
+        if any(h in url for h in ("9to5toys.com", "androidpolice.com", "tomsguide.com", "wccftech.com")):
             return httpx.Response(200, text=fixture_text("9to5toys.xml"), headers={"content-type": "application/rss+xml"})
         if "blackfriday.com/ads/" in url:
             return httpx.Response(200, text=fixture_text("bf_ad_walmart.html"), headers={"content-type": "text/html"})

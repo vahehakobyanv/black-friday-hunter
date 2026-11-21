@@ -83,9 +83,9 @@ scoring:
 # tier 3 here is whole categories. Shown at the top of every email in this order.
 priorities:
   labels:
-    1: "PlayStation & MacBook"
-    2: "Tablets & electronics"
-    3: "Home & kitchen"
+    1: "PlayStation, Xbox и MacBook"
+    2: "Планшеты и электроника"
+    3: "Дом и кухня"
   categories:
     3: ["kitchen", "home_furniture", "appliances"]
   per_item: 3              # best deals shown per watchlist item

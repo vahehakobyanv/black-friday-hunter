@@ -64,19 +64,19 @@ def discount_info(inp: ScoreInput, cfg: ScoringCfg) -> DiscountInfo:
     if avg:
         d = pct_below(inp.price, avg)
         if d is not None:
-            label = "90-day average" if inp.stats.avg_90d else "30-day average"
-            candidates.append((d * cred.get("own_history", 1.0), d, f"own {label}"))
+            label = "90 дней" if inp.stats.avg_90d else "30 дней"
+            candidates.append((d * cred.get("own_history", 1.0), d, f"нашей средней цены за {label}"))
     if advertised is not None and inp.reference_kind != ReferenceKind.NONE and not suspicious:
         c = cred.get(inp.reference_kind.value, 0.5)
         basis = {
-            ReferenceKind.NEXT_BEST_PRICE: "price at the next-cheapest shop",
-            ReferenceKind.REGULAR_PRICE: "retailer's regular price",
-            ReferenceKind.LIST_PRICE: "advertised list price",
-            ReferenceKind.OWN_HISTORY: "own history",
+            ReferenceKind.NEXT_BEST_PRICE: "цены в следующем по дешевизне магазине",
+            ReferenceKind.REGULAR_PRICE: "обычной цены магазина",
+            ReferenceKind.LIST_PRICE: "заявленной «старой» цены",
+            ReferenceKind.OWN_HISTORY: "нашей истории цен",
         }.get(inp.reference_kind, inp.reference_kind.value)
         candidates.append((advertised * c, advertised, basis))
     if not candidates:
-        return DiscountInfo(None, "no reference price", advertised, suspicious)
+        return DiscountInfo(None, "нет цены для сравнения", advertised, suspicious)
     best = max(candidates, key=lambda c: c[0])
     return DiscountInfo(best[1], best[2], advertised, suspicious, credible_pct=best[0])
 

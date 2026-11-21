@@ -34,9 +34,9 @@ def chargeable_weight(actual_kg: float, fw: ForwarderCfg, dims: tuple[float, flo
     if dims and fw.volumetric_divisor:
         vol = dims[0] * dims[1] * dims[2] / fw.volumetric_divisor
         if vol > w:
-            w, note = vol, f"volumetric {vol:.2f} kg"
+            w, note = vol, f"объёмный вес {vol:.2f} кг"
     elif fw.volumetric_divisor is None:
-        note = "volumetric weight not checked (no divisor/dimensions)"
+        note = "объёмный вес не проверен (нет размеров)"
     if fw.min_chargeable_kg:
         w = max(w, fw.min_chargeable_kg)
     if fw.rounding_kg:
@@ -51,10 +51,10 @@ def customs_duty_eur(value_eur: float, weight_kg: float | None, cfg: Config) -> 
     by_value = excess_value * r.rate_on_excess_pct / 100
     by_weight = excess_weight * r.min_eur_per_excess_kg
     if excess_value <= 0 and excess_weight <= 0:
-        return 0.0, f"under €{r.duty_free_value_eur:.0f}/{r.duty_free_weight_kg:.0f} kg duty-free limit"
+        return 0.0, f"в пределах беспошлинного лимита €{r.duty_free_value_eur:.0f}/{r.duty_free_weight_kg:.0f} кг"
     duty = max(by_value, by_weight)
-    return duty, (f"{r.rate_on_excess_pct:g}% of €{excess_value:.0f} above €{r.duty_free_value_eur:.0f}"
-                  + (f", min €{r.min_eur_per_excess_kg:g}/kg over {r.duty_free_weight_kg:g} kg" if excess_weight else ""))
+    return duty, (f"{r.rate_on_excess_pct:g}% от €{excess_value:.0f} сверх €{r.duty_free_value_eur:.0f}"
+                  + (f", мин. €{r.min_eur_per_excess_kg:g}/кг сверх {r.duty_free_weight_kg:g} кг" if excess_weight else ""))
 
 
 def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstimate:
@@ -63,10 +63,10 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
     complete = True
     price_usd = fx.to_usd(inp.price, inp.currency)
     if price_usd is None:
-        return DeliveryEstimate(route="unavailable", lines=[], total_usd=None, total_amd=None, complete=False,
+        return DeliveryEstimate(route="нет данных", lines=[], total_usd=None, total_amd=None, complete=False,
                                 weight_kg=None, weight_is_estimate=False,
-                                warnings=[f"no exchange rate for {inp.currency}"])
-    lines.append(CostLine(label="Product price", amount_usd=round(price_usd, 2), kind=inp.price_kind))
+                                warnings=[f"нет курса для {inp.currency}"])
+    lines.append(CostLine(label="Цена товара", amount_usd=round(price_usd, 2), kind=inp.price_kind))
 
     # weight
     weight, weight_est = inp.weight_kg, False
@@ -74,7 +74,7 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
         est = cfg.categories.categories.get(inp.category)
         if est and est.est_weight_kg:
             weight, weight_est = est.est_weight_kg, True
-            warnings.append(f"weight estimated ({weight:g} kg, category default)")
+            warnings.append(f"вес оценён ({weight:g} кг, типичный для категории)")
 
     # route
     direct = direct_route_for(inp.retailer, inp.region, cfg.shipping)
@@ -87,33 +87,33 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
         domestic_usd = 0.0
     elif inp.free_shipping:
         domestic_usd = 0.0
-        lines.append(CostLine(label="Shipping to forwarder", amount_usd=0.0, kind=PriceKind.ADVERTISED, note="free shipping"))
+        lines.append(CostLine(label="Доставка до форвардера", amount_usd=0.0, kind=PriceKind.ADVERTISED, note="бесплатная доставка"))
     elif inp.shipping_cost is not None:
         domestic_usd = fx.to_usd(inp.shipping_cost, inp.currency)
-        lines.append(CostLine(label="Shipping to forwarder", amount_usd=round(domestic_usd or 0, 2), kind=PriceKind.ADVERTISED))
+        lines.append(CostLine(label="Доставка до форвардера", amount_usd=round(domestic_usd or 0, 2), kind=PriceKind.ADVERTISED))
     else:
         default = cfg.shipping.domestic_shipping_default.get(inp.region.upper())
         if default is not None:
             domestic_usd = fx.to_usd(default, inp.currency)
-            lines.append(CostLine(label="Shipping to forwarder", amount_usd=round(domestic_usd or 0, 2),
-                                  kind=PriceKind.ESTIMATED, note="configured default"))
+            lines.append(CostLine(label="Доставка до форвардера", amount_usd=round(domestic_usd or 0, 2),
+                                  kind=PriceKind.ESTIMATED, note="значение по умолчанию из настроек"))
         else:
             domestic_usd = None
             complete = False
-            lines.append(CostLine(label="Shipping to forwarder", amount_usd=None, kind=PriceKind.UNVERIFIED,
-                                  note="unknown — check at checkout"))
+            lines.append(CostLine(label="Доставка до форвардера", amount_usd=None, kind=PriceKind.UNVERIFIED,
+                                  note="неизвестно — проверьте при заказе"))
 
     # sales tax at origin
     tax_usd = 0.0
     if fw is not None and fw.origin_sales_tax_pct:
         tax_usd = price_usd * fw.origin_sales_tax_pct / 100
-        lines.append(CostLine(label="Sales tax at origin", amount_usd=round(tax_usd, 2), kind=PriceKind.ESTIMATED))
+        lines.append(CostLine(label="Налог с продаж в стране покупки", amount_usd=round(tax_usd, 2), kind=PriceKind.ESTIMATED))
 
     # international leg
     intl_usd: float | None = None
-    route = "unavailable"
+    route = "нет данных"
     if direct is not None:
-        route = f"Direct from {inp.retailer}"
+        route = f"Напрямую от {inp.retailer}"
         if direct.flat_fee_usd is not None or direct.per_kg_usd is not None:
             if direct.per_kg_usd is not None and weight is None:
                 complete = False
@@ -123,37 +123,37 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
             complete = False
     elif fw is None:
         complete = False
-        warnings.append(f"no forwarder configured for {inp.region}")
-        route = f"{inp.region} → Yerevan (no forwarder configured)"
+        warnings.append(f"форвардер для {inp.region} не настроен")
+        route = f"{inp.region} → Ереван (форвардер не настроен)"
     else:
-        route = f"{inp.region} shop → {fw.name} → Yerevan"
+        route = f"магазин {inp.region} → {fw.name} → Ереван"
         if fw.rate_per_kg is None:
             complete = False
-            warnings.append(f"{fw.name}: rate per kg not configured")
+            warnings.append(f"{fw.name}: тариф за кг не задан")
         elif weight is None:
             complete = False
-            warnings.append("weight unknown")
+            warnings.append("вес неизвестен")
         else:
             cw, note = chargeable_weight(weight, fw, inp.dimensions_cm)
             fee = cw * fw.rate_per_kg + (fw.handling_fee or 0)
             intl_usd = fx.convert(fee, fw.rate_currency, "USD")
             if intl_usd is None:
                 complete = False
-            label_note = f"{cw:g} kg × {fw.rate_per_kg:g} {fw.rate_currency}/kg" + (f"; {note}" if note else "")
+            label_note = f"{cw:g} кг × {fw.rate_per_kg:g} {fw.rate_currency}/кг" + (f"; {note}" if note else "")
             if not fw.verified:
-                label_note += "; rate not verified"
-            lines.append(CostLine(label="Forwarding to Yerevan", amount_usd=round(intl_usd, 2) if intl_usd is not None else None,
+                label_note += "; тариф не проверен"
+            lines.append(CostLine(label="Пересылка в Ереван", amount_usd=round(intl_usd, 2) if intl_usd is not None else None,
                                   kind=PriceKind.ESTIMATED, note=label_note))
     if intl_usd is None and not any(line.label == "Forwarding to Yerevan" for line in lines):
-        lines.append(CostLine(label="Forwarding to Yerevan", amount_usd=None, kind=PriceKind.UNVERIFIED, note="unavailable"))
+        lines.append(CostLine(label="Пересылка в Ереван", amount_usd=None, kind=PriceKind.UNVERIFIED, note="нет данных"))
 
     # insurance (optional; shown only when configured)
     ins_usd = 0.0
     if fw is not None and fw.insurance_pct:
         ins_usd = price_usd * fw.insurance_pct / 100
-        lines.append(CostLine(label="Insurance", amount_usd=round(ins_usd, 2), kind=PriceKind.ESTIMATED))
+        lines.append(CostLine(label="Страховка", amount_usd=round(ins_usd, 2), kind=PriceKind.ESTIMATED))
     elif fw is not None:
-        warnings.append("insurance not included (rate not configured)")
+        warnings.append("страховка не учтена (тариф не задан)")
 
     # customs
     value_usd = price_usd + (domestic_usd or 0) + tax_usd
@@ -164,14 +164,14 @@ def estimate_delivery(inp: ShipInput, fx: FxTable, cfg: Config) -> DeliveryEstim
     if value_eur is None:
         complete = False
         customs_usd = None
-        lines.append(CostLine(label="Armenian customs", amount_usd=None, kind=PriceKind.UNVERIFIED, note="no EUR rate"))
+        lines.append(CostLine(label="Таможня Армении", amount_usd=None, kind=PriceKind.UNVERIFIED, note="нет курса EUR"))
     else:
         duty_eur, cnote = customs_duty_eur(value_eur, weight, cfg)
         duty_eur_val = duty_eur
         customs_usd = fx.convert(duty_eur, "EUR", "USD") or 0.0
         if weight_est and weight and weight > cfg.shipping.customs.regime.duty_free_weight_kg:
-            cnote += " (weight estimated)"
-        lines.append(CostLine(label="Armenian customs", amount_usd=round(customs_usd, 2), kind=PriceKind.ESTIMATED, note=cnote))
+            cnote += " (вес оценён)"
+        lines.append(CostLine(label="Таможня Армении", amount_usd=round(customs_usd, 2), kind=PriceKind.ESTIMATED, note=cnote))
 
     total = price_usd + (domestic_usd or 0) + tax_usd + (intl_usd or 0) + ins_usd + (customs_usd or 0)
     return DeliveryEstimate(
