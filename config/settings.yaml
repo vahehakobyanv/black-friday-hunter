@@ -47,6 +47,8 @@ filters:
   offer_ttl_hours: 48
   # Offers older than this (since last seen) are labelled STALE in the email.
   stale_after_hours: 3
+  # Only offers from these shop regions are ranked and emailed (empty list = all). USA only since 22 Nov 2026.
+  regions: ["US"]
 
 history:
   # Record a new observation for an unchanged price at most every N hours.

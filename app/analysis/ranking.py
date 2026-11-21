@@ -139,6 +139,8 @@ def build_deals(repo: Repository, cfg: Config, fx: FxTable, now: datetime, run_s
             continue
         offers: list[OfferView] = []
         for l in group:
+            if s.filters.regions and l.region not in s.filters.regions:
+                continue
             p_usd = fx.to_usd(l.last_price, l.currency)
             if p_usd is None or p_usd < s.filters.min_price_usd:
                 continue

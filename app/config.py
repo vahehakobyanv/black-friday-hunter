@@ -58,6 +58,7 @@ class FiltersCfg(BaseModel):
     exclude_categories: list[str] = Field(default_factory=lambda: ["other"])
     offer_ttl_hours: int = 48
     stale_after_hours: int = 3
+    regions: list[str] = Field(default_factory=list)   # empty = all regions
 
 
 class HistoryCfg(BaseModel):

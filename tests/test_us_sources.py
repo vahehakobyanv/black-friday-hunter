@@ -88,3 +88,11 @@ def test_target_ignores_cheap_matches(cfg):
     assert ps5.target_price_usd == 500 and ps5.min_price_usd == 300
     xbox = [w.name for w in watch_matches("Xbox Series X Console 1TB Disc", cfg)]
     assert xbox == ["Xbox Series X"]
+
+
+def test_region_filter_keeps_only_usa(cfg, now, tmp_path):
+    cfg.settings.filters.regions = ["US"]
+    out = run_once(cfg, send=False, transport=make_transport(), now=now, report_dir=tmp_path, sleep=lambda s: None)
+    html = out.report_path.read_text()
+    assert out.deals > 0
+    assert "(DE)" not in html and "(UK)" not in html and "(US)" in html

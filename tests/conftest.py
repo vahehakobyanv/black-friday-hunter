@@ -23,6 +23,7 @@ def cfg(tmp_path, monkeypatch):
     c.settings.collection.per_host_delay_seconds = 0
     for src in c.stores.sources:   # DE/UK are off in production (USA only) but their collectors stay tested
         src.enabled = True
+    c.settings.filters.regions = []
     return c
 
 
